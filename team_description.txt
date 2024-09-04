@@ -13,3 +13,8 @@ Member 2:
 Kyler Shields
 NetID: kls1187
 github email: klshields12@icloud.com
+
+Member 3:
+Kyle Owens
+NetID: jko83
+github email: jkyleowens@gmail.com
