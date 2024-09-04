@@ -10,7 +10,9 @@ Githum user name: DJKYL64
 Role: Front End Designer
 
 Member 3:
-
+Kyle Owens;
+Github username: jkyleowens;
+Role: Project organization
 
 
 
