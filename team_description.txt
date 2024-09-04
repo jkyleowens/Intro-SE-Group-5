@@ -8,3 +8,8 @@ Member 1:
 Tahsin Tasnia Khan
 Netid: tk821
 github email: tahsintasnia602@gmail.com
+
+Member 2:
+Kyler Shields
+NetID: kls1187
+github email: klshields12@icloud.com
