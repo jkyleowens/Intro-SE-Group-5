@@ -1,6 +1,6 @@
 Member 1: 
-Tahsin Tasnia Khan
-Github user name: tasnia87
+Tahsin Tasnia Khan; 
+Github user name: tasnia87; 
 Role: Backend management
 
 
