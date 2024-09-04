@@ -6,7 +6,7 @@ Role: Backend management
 
 Member 2:
 Kyler Shields;
-Github user name: DJKYL64
+Github user name: DJKYL64;
 Role: Front End Designer
 
 Member 3:
