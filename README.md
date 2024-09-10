@@ -17,4 +17,5 @@ Role: Project organization
 
 
 Language and Techniques we want to use:
-HTML, CSS, Javascript
+HTML, CSS, NodeJS
+
