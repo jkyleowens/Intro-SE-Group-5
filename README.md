@@ -14,6 +14,16 @@ Kyle Owens;
 Github username: jkyleowens;
 Role: Project organization
 
+Member 4:
+Olivia Tyler;
+Github username: olt28
+Role: Front End Designer
+
+Member 5:
+Jocelyn Solito;
+Github username: jsolit
+Role: 
+
 
 
 Language and Techniques we want to use:
