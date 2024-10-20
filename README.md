@@ -27,7 +27,7 @@ Role:
 
 
 Language and Techniques we want to use:
-HTML, CSS, and node.js with frameworks: React.js for frontend and Express.js for the backend. DB Browser with sqlite will be used for creating, accessing, and modifying the database.
+HTML, CSS, and node.js with the Express.js framework for the backend. DB Browser with sqlite will be used for creating, accessing, and modifying the database.
 
 
 Product Descriptions:
