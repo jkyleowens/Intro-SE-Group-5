@@ -1,3 +1,6 @@
+--- Development Branch ---  
+This is where the most recent version will be held. To make sure you have the most updated version of the app create branches with this as the base. When you are done making changes to the feature you're working on make a pull request to merge your branch into develop. This way merge conflicts can be avoided and if there is an update to the develop branch, your branch will be updated when you pull.
+
 Member 1: 
 Tahsin Tasnia Khan; 
 Github user name: tasnia87; 
