@@ -1,12 +1,16 @@
 //includes 
 const express = require('express')
+const path = require('path');
+const sqlite3 = require('sqlite3').verbose();
+import { Sequelize, DataTypes } from "sequelize";
+export { router, sequelize };
 
 //init app & set port
 const app = express();
+const port = 3000;
 const session = require('express-session');
 const router = express.Router();
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 const multer = require('multer');
 
 const flash = require('connect-flash');
@@ -27,21 +31,15 @@ app.use((req, res, next) => {
     res.locals.flashMessage = req.flash('info'); // or 'error', depending on your usage
     next();
 });
-const port = 3000;
 
 app.set('view engine', 'ejs');
 
-//load frontend css & js
-app.use(express.static(__dirname + "/public"));
-
-const path = require('path');
+//load frontend static files
+app.use(express.static(path.join(__dirname, "public")));
 
 // Middleware to parse form data
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public')); // Serve static files
 
-// Middleware to serve static files
-app.use('/uploads', express.static(path.join(__dirname, 'publics', 'uploads')));
 
 // Initialize the cart
 
@@ -53,63 +51,28 @@ app.use((req, res, next) => {
     next();
 });
 
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('Backend/Database.db');
+/* SEQUELIZE INITIALIZATION */
+// success/failure callbacks
+function success(action)
+{
+    console.log("%s successful.", action);
+}
+function failure(action, err)
+{
+    console.error("%s failed: %s", action, err);
+}
 
-// Create books table if it doesn't exist
+// init sequelize object
+const sequelize = new Sequelize({
+    dialect: "sqlite",
+    storage: path.join(__dirname, 'Backend/Database.db')
+});
 
-db.serialize(() => {
-    // db.run('INSERT INTO users (email, password) VALUES (?, ?)', [email, password], (err) => {
-    //   if (err) {
-    //     console.error('Database error:', err.message);
-    //   }
-    // });
- 
-    db.run(`
-        CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT UNIQUE,
-  email TEXT,
-  password TEXT
-);
-      `);
-      });    
-db.run(`
-  CREATE TABLE IF NOT EXISTS books (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    author TEXT NOT NULL,
-    price REAL,
-    coverImage TEXT
-  )
-`);
-
-db.run(`
-    CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    customer_name TEXT NOT NULL,
-    address TEXT NOT NULL,
-    city TEXT NOT NULL,
-    zip TEXT NOT NULL,
-    total_price REAL NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'Pending'
-);
-
-CREATE TABLE IF NOT EXISTS order_items (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id INTEGER NOT NULL,
-    book_id INTEGER NOT NULL,
-    book_name TEXT NOT NULL,
-    author TEXT NOT NULL,
-    price REAL NOT NULL,
-    coverImage TEXT,
-    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
-);
-
-  `);
-
-module.exports = db;
+// verify database connection
+var act = "Connecting to the database";
+const auth = sequelize.authenticate();
+auth.then(() => success(act)).catch((err) => failure(act, err)); // callback for success for failure
+/* END SEQUELIZE INIT */
 
 
 // Configure Multer for file uploads
@@ -376,7 +339,6 @@ app.post('/process-checkout', (req, res) => {
     });
 });
 
-module.exports = router;
 // end routing
 
 
