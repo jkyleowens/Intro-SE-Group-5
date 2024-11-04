@@ -1,35 +1,42 @@
 // imports / exports
 import path from 'path';
+import multer from 'multer'
 
-import AppManager from './src/controllers/AppManager.js';
 import { fileURLToPath } from 'url';
+import AppManager from './src/controllers/AppManager.js';
 
 
-const __filename = fileURLToPath(import.meta.url);
+const filename = fileURLToPath(import.meta.url);
 
 
 // establish port
 const port = 3000; 
 
 // project root dir
-const root = path.dirname(__filename);
+const root = path.dirname(filename);
+
+
 
 
 
 try {
 
+    console.log(root);
     // connect to database
-    await AppManager.initSequelize();
-    await AppManager.initApp(root, port); // inits controllers
+    await AppManager.InitSequelize(root);
+    const app = await AppManager.InitApp(root); // inits controllers
+
+    
+    
+
+    AppManager.server = app.listen(port, () => {
+        console.log('server started on port %d', port);
+    });
 
 } catch (err) {
-
-    appMngr.failure('starting express app', err);
-    appMngr.onExit();
+    console.log(err);
+    onExit();
 }
-
-
-export default AppManager;
 
 
 async function onExit()
@@ -38,18 +45,14 @@ async function onExit()
     try {
 
         msg = 'closing express server';
-        AppManager.server.close(async () => {
-        
-            await AppManager.sequelize.close();
-            AppManager.success(msg);
-            console.log('express server successfully closed.');
-            process.exit(0);
+        await AppManager.CloseApp();
 
+        console.log('App successfully closed.');
         
-        })
         setTimeout(() => {
             throw new Error('timed out while ' + msg + '. exiting...');
         }, 5000);
+        process.exit(0);
     } catch (err) {
         console.error(msg + ' failed: ' + err);
         process.exit(1);
@@ -64,6 +67,6 @@ process.on('SIGTERM', onExit);
 
 
 
-
+export default AppManager;
 
 

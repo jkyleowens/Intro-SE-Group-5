@@ -21,29 +21,7 @@ class UserClient
 
         this.emailFormat = /^(\w)+([.-]?\w)*@(\w)+[.](\w)+([.]\w)?$/;  // email format regex
 
-        // login form submitted
-        document.getElementById('login-form').addEventListener('submit', async (event) => {
-
-            // can't submit default form
-            event.preventDefault();
-
-            const email = document.getElementById('email').textContent;
-            const password = document.getElementById('password').textContent;
-
-            let result, act = 'logging in';
-
-            // validate login on frontend
-            try {
-
-                result = await this.checkLogin(email, password); // returns userID or throws err
-
-                return;
-
-            } catch (err) {
-                this.flashMessage = err;
-                throw new Error(act + err);
-            }
-        })
+        
     }
     
     /* 
@@ -92,7 +70,7 @@ class UserClient
     }
 
     //frontend validation for registering user
-    async RegisterUser(name, email, password)
+    async RegisterUser(username, email, password)
     {
 
         // send register request
@@ -106,12 +84,12 @@ class UserClient
 
 
             // post ---> /api/login ---> UserRouter
-            const res = await fetch('/api/login', {
+            const res = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email:email, password:password })
+                body: JSON.stringify({ username: username, email:email, password:password })
             });
 
             // unsuccessful
@@ -121,12 +99,10 @@ class UserClient
             }
 
             // successful
-            const { userID, name, cart } =  await res.json(); // store results
-            this.userID = userID;
-            this.name = name;
-            this.cart = cart;
+            const obj = await res.json(); // store results
+            this.userID = obj.userID;
 
-            return userID;
+            return this.userID;
 
         } catch (err) {
             throw err;

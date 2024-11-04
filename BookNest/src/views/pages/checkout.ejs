@@ -26,19 +26,29 @@
                             <th scope="col">Cover</th>
                             <th scope="col">Book Name</th>
                             <th scope="col">Author</th>
+                            <th scope="col">Quantity</th>
                             <th scope="col">Price</th>
+                            <th scope="col">Total</th>
                         </tr>
                     </thead>
                     <tbody>
                         <% let totalPrice = 0; %>
                         <% cart.forEach(book => { %>
+                            <% let cost = book.price * book.quantity; %>
                             <tr>
-                                <td>
+                                <td> <%# cover image %>
                                     <img src="<%= book.coverImage %>" alt="<%= book.name %>" class="img-thumbnail" style="width: 100px;">
                                 </td>
+                                <%# name %>
                                 <td><%= book.name %></td>
+                                <%# author %>
                                 <td><%= book.author %></td>
+                                <%# quantity %>
+                                <td><%= book.quantity %></td>
+                                <%# price %>
                                 <td>$<%= book.price.toFixed(2) %></td>
+                                <%# total %>
+                                <td>$<%= cost.toFixed(2) %></td>
                             </tr>
                             <% totalPrice += book.price; %>
                         <% }) %>

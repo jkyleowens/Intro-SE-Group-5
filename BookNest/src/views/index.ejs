@@ -9,7 +9,7 @@ header for the navigation bar and a div below that acts as a container for the o
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> <%= title %> </title>
-    <script type="module" src="../../app.js" defer></script>
+    
 </head>
 <body>
     <!-- Navbar -->
@@ -39,14 +39,15 @@ header for the navigation bar and a div below that acts as a container for the o
     <%# render any flash messages %>
     <% if (messages.length > 0) { %>
         <div class="alert alert-info" role="alert">
-            <% messages.forEach(msg) => { %>
+            <% messages.forEach((msg) => { %>
                 <p> <%= msg %> </p>
-            <% }}; %>
+            <% })}; %>
         </div>
 
     <%# div content changes if user navigates pages %>
     <div id="content">
         <%- include(content) %>
     </div>
+    <script type="script" src="./javascript/event.js"></script>
 </body>
 </html>

@@ -30,25 +30,19 @@ class UserManager
     // none or many arguments ({'userID', userID}, {})
     async ValidateUsers(...attr)
     {
-        let prev = null, ret = [];
+        let arr = new Set, ret = [];
         try {
             // search each key value pair
             attr.forEach(async (obj) => {
                 const { arg, value } = obj;
                 
                 const condition = (arg && value) ? { [arg] : value } : {}; // find attribute of value if given
-                const match = await this.#user.findAll({ where: condition });
-                
-                const regex = new RegExp(prev.userID);
-                // find way to remove duplicates
-                const dupe = match.filter((value, index, array) => regex.test(match.userID));
+                const match = await this.#user.findOne({ where: condition });
 
-                ret = ret.concat(match);
-                prev = match;
+                arr.add(match);
             });
 
-            if (ret.length == 1) return ret[0];
-            return ret;
+            return arr;
 
         } catch (err) {
             throw err;
@@ -62,24 +56,21 @@ class UserManager
             const match = await this.ValidateUsers({'email': email}); // find user
 
             // more or less than 1 user
-            if (Array.isArray(match)) 
-            {
-                if (match.length === 0) throw 'no user found with that email'; // empty array
-
-                throw 'multiple users exist with that email.'; // duplicate
-            }
+            if (match.length === 0) throw 'no user found with that email';
+            
+            const usr = list.user;
 
             // password doesn't match
-            if (match.password !== password) throw 'the password you entered is incorrect.';
+            if (usr.password !== password) throw 'the password you entered is incorrect.';
 
             
             // login was successful
             console.log('Login was successful');
 
-            return match.userID;
+            return usr.userID;
             
         } catch (err) { 
-            throw new Error(err);
+            throw err;
         }
     }
 
@@ -90,13 +81,15 @@ class UserManager
             // see if user exists
             let user = await this.ValidateUsers();
 
-            if (user) throw 'user with that email already exists';
+            if (user.length > 0) throw 'user with that email already exists';
 
-            user = await this.#user.create({
+            const ret = await this.#user.create({
                 name: name,
                 email: email,
                 password: password
             });
+
+            return ret.userID;
 
             //return
         } catch (err) {

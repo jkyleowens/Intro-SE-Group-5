@@ -11,14 +11,9 @@
 </head>
 <body>
     <div class="container mt-5">
-        <% if (flashMessage) { %>
-            <div id="notification" class="alert alert-success" role="alert">
-                <%= flashMessage %>
-            </div>
-        <% } %>
 
         <h1 class="text-center mb-4"><%= title %></h1>
-        <form action="/register" method="POST" class="border p-4 rounded">
+        <form action="/register" method="post" name="register-form" id="register-form" class="border p-4 rounded">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>

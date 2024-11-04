@@ -1,6 +1,4 @@
 import path from 'path'
-import multer from 'multer'
-
 
 // backend class for managing inventory and orders
 class InventoryManager
@@ -12,7 +10,6 @@ class InventoryManager
 
     //multer
     #storage; 
-    #upload;
 
     // storage arrays
     #inv = []; // inv [ { item } ]
@@ -27,8 +24,7 @@ class InventoryManager
         this.#order = null;
         this.#order_item = null;
 
-        this.#storage = null;
-        this.#upload = null; 
+        this.upload = null; 
     }
 
     // update class model properties
@@ -45,23 +41,6 @@ class InventoryManager
         } catch (err) {
             throw 'InventoryManager: ' + err;
         }
-    }
-
-    async UpdateMulter(where)
-    {
-        // Configure Multer for file uploads
-        const storage = multer.diskStorage({
-            destination: where, // Save images here
-
-            filename: (req, file, cb) => { // unique fileName
-                const unique = Date.now() + '-' + req.body.isbn;
-                const ext = path.extname(file.path);
-
-                cb(null, (unique + ext)); // Unique file name + extension
-            },
-        });
-        this.#storage = storage;
-        this.#upload = multer({ storage: storage }); 
     }
 
     async search_item(attribute, value)
@@ -149,7 +128,7 @@ class InventoryManager
         }
     }
 
-    async PlaceOrder(orderID)
+    async PlaceOrder(orderID, shipping=null, )
     {
         const inv = this.#inv;
 
@@ -157,43 +136,49 @@ class InventoryManager
             //find order with id
             const order = await this.search_order('orderID', orderID);
             if (order.length === 0) throw `order with ID: ${orderID} not found`;
+            if (order.status == 'active') throw `order with ID: ${orderID} is active`;
+
+            // CHARGE CARD HERE
+
+            this.#orders.push(order);
 
             //get order_items matched to order
             let res = await this.search_order_item('orderID', orderID);
             const arr = (res.length === 0) ? () => { throw 'cart is empty' } : arr;
 
             res = (!Array.isArray(arr)) ? [arr] : arr; // encaps in array if 1 
+            
+            let totalPrice = 0;
 
-
-            // push orders
+            //update inventory 
             res.forEach(async element => {
 
                 const bookID = element.itemID;
                 const quantity = element.quantity;
-
-                element.status = 'active';
-
+                
                 const item = await this.search_item('itemID', bookID); // get book from order_item
 
-                if (item.stock < quantity) throw 'not enough stock to fulfill this order';
+                // add price
+                totalPrice += item.price * quantity;
+
+                if (item.stock < quantity) throw `not enough of item ${bookID} in stock`;
                 
-                // subtract quantity from stock and update
+                // update stock 
                 item.stock -= quantity;
+                
                 item.save();
-
-                this.#orders.push(element); // add order_item to orders
-            
+                 // add order_item to orders
+                
             });
+
+            // set order details
+            order.total = totalPrice;
+            order.status = 'pending';
+            order.save();
+
         } catch (err) {
-            throw new 'InventoryManager: ' + err;
+            throw new Error(`can't place order ${orderID}: ` + err);
         }
-    }
-
-    UploadImage(attr) {
-
-        if (this.#upload == null) throw 'multer not initialized';
-
-        return this.#upload.single(attr);  
     }
 
     // create book with object containing details
@@ -202,7 +187,7 @@ class InventoryManager
         try {
 
             // extract details and make new item
-            const { isbn, name, author, price, stock } = details;
+            const { isbn, name, author, price, stock, coverImage } = JSON.parse(details);
 
             this.#inv.forEach(book => {
                 if (book.itemID == isbn) throw 'book already exists';
@@ -215,7 +200,8 @@ class InventoryManager
                 name: name,
                 author: author,
                 price: price,
-                stock: stock
+                stock: stock,
+                coverImage: coverImage
             });
 
             this.#inv.push(book);

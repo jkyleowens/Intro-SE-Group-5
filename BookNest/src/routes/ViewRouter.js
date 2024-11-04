@@ -3,22 +3,26 @@ import path from 'path';
 
 import AppManager from '../controllers/AppManager.js';
 import InventoryManager from '../controllers/InventoryManager.js';
+import UserManager from '../controllers/UserManager.js';
+import UserClient from '../../public/javascript/UserClient.js';
 
 // initializes and handles routes
 class ViewRouter
 {
-    #router;
+    #index = 'index'; 
+    #pages = 'pages/';
 
-    constructor()
+    constructor(upload)
     {
-        this.#router = express.Router();
+        this.router = express.Router();
 
-        this.InitRouting();
+        this.InitRouting(upload);
+        this.InitMiddleware();
     }
 
     InitRouting()
     {
-        const router = this.#router;
+        const router = this.router;
 
         // views routes
         router.get('/', this.ViewHome);
@@ -29,77 +33,58 @@ class ViewRouter
         router.get('/order/:id', this.ViewOrder);
         router.get('/profile/:id', this.ViewProfile);
         router.get('/checkout', this.ViewCheckout);
-        router.get('/add-book', this.AddBook);
+        router.get('/add-book', this.EnterBook);
         router.get('/add-to-cart', this.AddCart);
         
         router.post('/remove-book', this.RemoveBook);
-
         router.post('/process-checkout', this.Checkout);
+        router.post('/register', this.StartRegister);
 
-        // login middleware
-        router.post('/api/login', (req, res, next) => this.PostLogin(req, res, next));
-
+        // api
+        router.post('/api/login', this.PostLogin);
         router.post('api/register', this.PostRegister);
 
         // add new book upon post from client
-        router.post('/add-book', InventoryManager.UploadImage('coverImage'), async (req, res) => { // file, body
-            const details = JSON.parse(req.body);
-            
-            const client = req.session.user;
-
-            // not logged in
-            if (client.userID == null) throw 'You must be logged in to add a book.';
-
-            // create book and update inv
-            try {
-
-                const book = await InventoryManager.CreateBook(req.body);
-
-                console.log(`Created new book with ISBN: ${book.isbn}`);
-                req.flash('message', 'Successfully added new book!');
-                return res.redirect('/');
-
-            } catch (err) {
-                throw new Error(err);
-                return res.redirect('/');
-            }
-
-
-        });
-
-        
+        router.post('/add-book', AppManager.upload.fields([
+            { name: 'coverImage', maxCount: 1 },
+            { name: 'isbn', maxCount: 1 }
+        ]), this.AddBook);
     }
 
-    async ViewHome(req, res)
+    InitMiddleware()
     {
-        const InventoryManager = AppManager.getInvMngr();
+        this.router.use((req, res, next) => {
+            console.log(`request received at ${req.originalUrl}`);
+            next();
+        });
+    }
 
-        // store flash message
-        res.locals.messages = req.flash('message');
+    ViewHome = async (req, res) => {
 
-        let featured = null, objArr = [];
+        let books = null, objArr = [];
 
         try {
             
-            featured = await InventoryManager.search_item('featured', true); // get all featured books
+            books = await InventoryManager.search_item(null, null); // get all featured books
 
         } catch (err) {
-            AppManager.failure('getting featured books', err);
-            flashMessage = 'Could not get featured books for display.';
-            req.flash()
+            AppManager.failure('getting all books', err);
+            req.flash('messages', 'could not get books from database');
         }
 
-        if (!Array.isArray(featured)) {
+        if (!Array.isArray(books)) {
 
-            const temp = [featured]; // convert single item array
-            featured = temp;
+            const temp = [books]; // convert single item array
+            books = temp;
         }
 
         // Log the books array
         console.log('Books:'); 
-        featured.forEach((book, i) => {
+        books.forEach((book, i) => {
             
-            const imgPath = path.join(AppManager.imgStore, book.coverImage); // get cover image
+            
+            const imgPath = './uploads/' + book.coverImage; // get cover image
+            console.log(imgPath);
 
             // populate array for ejs
             objArr[i] = { book: book, imgPath: imgPath };
@@ -109,23 +94,21 @@ class ViewRouter
 
         res.render('index', {
             title: 'Home',
-            content: 'pages/home', // Path to the content EJS file
+            content: './pages/home', // Path to the content EJS file
             objArr: objArr, // Ensure books is an array
         });
         
     }
 
-    async ViewLogin(req, res)
-    {
+    ViewLogin = async (req, res) => {
         res.render('index', {
             title: 'Login',
-            content: 'pages/login'
+            content: './pages/login'
         });
     }
 
     // middleware for login
-    async PostLogin(req, res, next)
-    {   
+    PostLogin = async (req, res, next) => {   
         // parse json string for details
         const { email, password } = JSON.parse(req.body);
 
@@ -133,269 +116,384 @@ class ViewRouter
 
         try {
             // check if user logged in
-            clientID = req.session.client.userID // UserClient userID
-            if (clientID != null) throw 'user already logged in'
-
-            const UserManager = AppManager.getUsrMngr(); // get backend user manager
-            if (UserManager == null) throw 'UserManager not initialized';
+            const client = req.session.client; // UserClient userID
+            if (client.userID != null) throw 'user already logged in'
 
             result = await UserManager.LoginUser(email, password); // send login request 
+
+            req.flash('Login was successful!');
+
+            // check if cart saved in db
+            let order = null, orderItem = null;
+            const temp = InventoryManager.search_order('userID', result);
+            const user = await UserManager.ValidateUsers({arg: 'userID', value: result})[0];
             
-            if (clientID != result) throw result; // 
+            client.userID = result;
+            client.name = user.name;
+            
+            // one inactive order
+            if (!Array.isArray(temp) && temp.status == 'inactive') {
+                order = temp;
+            }
+            
+            // find inactive order
+            for (let i = 0; i < temp.length; i++)
+            {
+                if (temp[i].status == 'inactive') {
+                    order = temp[i];
+                    break;
+                }
+            }
+
+            // order not found, new inactive order
+            if (!order) {
+                order = await InventoryManager.new_order(result, null, 'inactive', 0);
+            }
+            // get items in cart
+            else {
+                orderItem = await InventoryManager.search_order('orderID', order.orderID);
+            }
+
+            // return if no items in stored cart
+            if (orderItem.length == 0) {
+                console.log('no items in user cart.');
+                return res.redirect('/');
+            }
+
+            // fill client cart with items from stored cart
+            for (let i = 0; i < orderItem.length; i++) {
+                const temp = orderItem[i];
+                const item = InventoryManager.search_item('itemID', temp.itemID);
+
+                const itemID = item.itemID;
+                const price = item.price;
+                const cover = item.coverImage;
+
+                const quantity = temp.quantity;
+                const total = quantity * price;
+
+                const obj = { 
+                    itemID: itemID, 
+                    quantity: quantity, 
+                    price: total, 
+                    coverImage: cover
+                };
+
+                client.cart.items.push(obj);
+            }
+            
+
+
             
         } catch (err) {
             req.flash('message', ('Login was unsuccessful: ' + err));
-            AppManager.failure(`logging in user with email ${email}`, err);
+            return res.redirect('/login');
         }
     }
 
-    async ViewRegister(req, res)
-    {
+    ViewRegister = (req, res) => {
         // render index.ejs with register embedded
         res.render('index', {
             title: 'Login',
-            content: 'pages/register'
+            content: './pages/register'
         });
     }
 
-    async PostRegister(req, res)
-    {
-        // parse json string for data
-        const sent = JSON.parse(req.body)
+    StartRegister = async (req, res) => {
 
-        //get app manager
+        const name = req.body.username;
+        const email = req.body.email;
+        const password = req.body.password;
+
+        try {
+            const client = req.session.client;
+
+            if (!client) throw 'UserClient not found';
+
+            const userID = await client.RegisterUser(name, email, password);
+
+            if (client.userID != userID) throw 'user registration failed';
+
+            req.flash('messages', 'Registration successful! You may now login.');
+            return res.redirect('/login');
+
+        } catch (err) {
+            req.flash('messages', 'Registration failed: ' + err);
+        }
         
+    }
 
-        const { name, email, password } = sent;
+    PostRegister = async (req, res) => {
+        // parse json string for data
+        const obj = req.body.json();
+
+        const username = obj.username;
+        const email = obj.email;
+        const password = obj.password;
 
         // Validate input: Make sure email and password are not empty
         let act = 'registering new user'
-        
-        try { 
-            const UserManager = await AppManager.getUsrMngr()
-            UserManager.RegisterUser(name, email, password);
-
-        } catch (err) {
-            const msg = act + ' failed: ' + err;
-            req.flash('error', err)
-            return res.redirect('/');
-        }
 
         // Insert new user into the database
         try {
-            const user = await newUser(username, email, password);
+            const userID = await UserManager.RegisterUser(username, email, password);
 
-            console.log(`User registered with ID: ${user.userID}`);
-            req.session.flashMessage = 'Registration successful! Please log in.';
+            console.log(`User registered with ID: ${userID}`);
+            req.flash() = 'Registration successful! Please log in.';
 
-            return res.redirect('/login');
+            const obj = { userID: userID };
+
+            return res.json(obj);
+
         } catch (err) {
-            AppManager.failure('creating new user', err);
-            req.session.flashMessage = 'Registration failed. Please try again.';
+            AppManager.failure(act, err);
+            req.flash() = 'Registration failed. Please try again.';
             return res.redirect('/register');
         }
     }
 
-    async ViewCart(req, res)
-    {
-        const order = req.session.cart; // Retrieve the cart's orderID
-        let search = await search_order_item('orderID', order);
-        let cart = [];
-    
-        if (!Array.isArray(search))
-        {
-            const toArr = [search];
-            search = toArr;
-        }
-    
-        for (let i = 0; i < search.length; i++) // loop through list
-        {
-            const temp = search[i]; // current instance
-    
-            const item = await searchItem('itemID', temp.itemID);
-            const quantity = temp.quantity;
-            const pathName = path.join(__dirname, 'public', 'uploads', item.coverImage);
-            cart[i] = { item: item, quantity: quantity, imgPath: pathName };;
-    
-        }
-    
-        return res.render('pages/cart', { cart: cart});
-    }
+    ViewCart = async (req, res) => {
 
-    async ViewCatalog(req, res)
-    {
-        res.render('index', {
-            title: 'Book Catalog',
-            content: 'pages/catalog'
+        const cart = req.session.client.cart.items;
+
+        if (cart.length == 0) req.flash('Your cart is empty.');
+
+        return res.render('index', {
+            title: 'Cart',
+            content: './pages/cart',
+            cart: cart
         });
     }
 
-    async ViewOrder(req, res)
-    {
+    ViewCatalog = async (req, res) => {
+        res.render('index', {
+            title: 'Book Catalog',
+            content: './pages/catalog'
+        });
+    }
+
+    ViewOrder = async (req, res) => {
          //find user in DB with matching ID
         //if user exists, render profile.ejs and pass user variables to be displayed
         res.render('index', {
             title: 'Order Info',
-            content: 'pages/order',
+            content: './pages/order',
             num: req.params.id
         })
     }
 
-    async ViewProfile(req, res)
-    {
+    ViewProfile = async (req, res) => {
         res.render('index', {
             title: 'My Profile',
-            content: 'pages/profile',
+            content: './pages/profile',
             num: req.params.id
         })
     }
 
-    async ViewCheckout(req, res)
-    {
-        const cart = req.session.cart; // Ensure there's a cart ID
-    
+    ViewCheckout = async (req, res) => {
+        
+        const list = req.session.client.cart.items; // Ensure there's items in cart
+
         try {
-            const list = await search_order_item('orderID', cart);
-            if (Array.isArray(list) && list.length === 0) { //return if empty
-                req.session.flashMessage = 'Error checking out: cart is empty!';
-                return res.redirect('/');
+            if (list.length === 0) { //return if empty
+                req.flash('message', 'Error checking out: cart is empty!');
+                return res.redirect('/cart');
             }
-            if (!Array.isArray) { 
-                const temp = list;
-                list = [temp];
-            }
+            
             // Render the checkout page
-            res.render('checkout', {
+            return res.render('index', {
                 title: 'Checkout',
+                content: './pages/checkout',
                 cart: list // Pass the cart to the checkout page
             });
         } catch (err) {
-            failure('checking out', err);
+            throw new Error(err);
         }
     }
 
-    async Checkout()
-    {
+    Checkout = async (req, res) => {
         const { name, address, city, zip } = req.body; // get order details
 
         let act, order;
         try { 
-            const user = req.session.user;
-            const cart = req.session.cart;
-            
-            act = 'getting items in cart';
-            const list = await search_order_item('orderID', cart); // list of order_item in cart
-            let totalPrice = 0.00;
-
-            if (!Array.isArray(list)) totalPrice = list.price;
-
-            list.forEach(async element => { // loop through order_item list
-                const item = await searchItem('itemID', element.itemID);
-                totalPrice += item.price * element.quantity; // add quantity multiplied by price
-            });
-            act = 'searching for cart order';
-            order = await searchOrder('orderID', cart);
+            const client = req.session.client;
+            const cartID = client.cart.orderID;
+        
             const shipping = name + "-" + address + "-" + city + "-" + zip; // combine details with delimiter for splitting
 
-            act = 'placing order';
             // place order
-            order.shipping = shipping; 
-            order.total = totalPrice;
-            order.status = 'pending';
-            await order.save();
+            act = 'placing order';
+            await InventoryManager.PlaceOrder(cartID, shipping);
 
             console.log(order);
 
             act = 'emptying cart';
             // empty cart
-            const empty = new_order(null, null);
-            cart = empty.orderID;
+            const empty = await InventoryManager.new_order(client.userID, shipping, 'inactive', 0);
+            client.cart.orderID = empty.orderID;
+            client.cart.items = [];
 
-            if (!user.id) { console.log('No user logged in.'); }
-            else empty.userID = user.id;
+            req.flash('messages', ('Successfully placed order ' + cartID));
+
             return res.redirect('/');
         } catch (err) { // error 
-            failure(act, err);
+            console.error(err);
+            req.flash('messages', 'There was an error placing your order.');
             return res.redirect('/')
         }
+            
     }
 
-    async AddBook(type, req, res)
-    {
-        if (type == 'GET') {
-            res.render('index', {
-                title: 'Add Book',
-                content: 'pages/add-book'
-            });
-        }
-        if (type == 'POST') {
-            const { isbn, name, author, price } = req.body;
-            const coverImageName = req.file ? req.file.filename : null;
+    EnterBook = async (req, res) => {
+
+        res.render('index', {
+            title: 'Add Book',
+            content: './pages/add-book'
+        });
         
-            let book;
-            try {
-                await newItem(isbn, name, author, price, coverImageName);
-                req.flash('info', 'New book added successfully!');
-                AppManager.success('adding new book');
-                res.redirect('/');
-            } catch (err) {
-                AppManager.failure('creating new book', err);
-                req.session.flashMessage = 'Error creating new book. Returning to home.';
-                return res.redirect('/');
-            }
+    }
+
+    AddBook = async (req, res) => {
+
+        const isbn = req.body.isbn;
+        const name = req.body.name;
+        const author = req.body.author;
+        const price = req.body.price;
+        const stock = req.body.stock;
+        const coverImage = req.files.coverImage[0].filename;
+
+        console.log(coverImage);
+    
+        let book;
+        try {
+            await InventoryManager.new_item(isbn, name, author, price, stock, coverImage);
+
+            req.flash('messages', 'New book added successfully!');
+            AppManager.success('adding new book');
+            return res.redirect('/');
+        } catch (err) {
+            AppManager.failure('creating new book', err);
+            req.session.flash('messages', 'Error creating new book. Returning to home.');
+            return res.redirect('/');
         }
     }
 
-    async RemoveBook(req, res)
-    {
+    RemoveBook = async (req, res) => {
+    
         // remove book from cart
         const bookId = req.body.bookId; // Get the book ID from the request
-        const quantity = req.body.quantity; // get quantity                     *** NEEDS TO ASK QUANTITY
-    
+        const quantity = req.body.quantity; // get quantity to remove 
+
+        const userID = req.session.client.userID;
+        const cart = req.session.client.cart;
+        const items = cart.items;
+        
         try { // Logic to remove the book from the cart
-            let book = await search_order_item('itemID', bookId); // get book by id
-            if (!Array.isArray(book)) // if 1 match
+
+            let item = null;
+            for (let i = 0; i < items.length; i++) // find item in cart
             {
-                if (quantity >= book.quantity) await free_instance('order_item', book);
-                else { 
-                    book.quantity -= quantity; 
-                    await book.save(); 
-                }
-    
-                req.session.flashMessage = 'Successfully removed book from cart!'
+                if (bookId != items[i].itemID) continue;
+
+                item = items[i];
+                if (quantity > item.quantity) throw 'not enough items in cart';
+
+                item.quantity -= quantity; // subtract from cart quantity
+                if (item.quantity < 1) items.splice(i, 1); // remove if empty 
+
+                break;
+            }
+
+            if (!item) throw 'item not found in cart';
+
+            // update db if logged in
+            if (userID) { 
+                const orderItem = await InventoryManager.search_order_item('itemID', bookId); // get book order by id
+
+                orderItem.quantity += quantity; // decrease quantity
+                orderItem.save();
             }
             
+            
+
+            req.flash('Successfully removed book from cart!');
+        
             res.redirect('/cart'); // Redirect back to the cart page
         } catch (err) {
-            req.session.flashMessage = 'There was an error removing book from cart.';
-            failure('removing book from cart', err);
+            req.flash('messages', 'There was an error removing book from cart: ' + err);
             res.redirect('/cart');
         }   
     }
 
-    async AddCart(req, res)
-    {
+    //middleware for adding items to cart
+    AddCart = async (req, res) => {
+    
         // get bookID and entered quantity
         const bookId = req.body.bookId;
         const quantity = req.body.quantity;
+
+        const userID = req.session.client.userID;
         
-        const cart = req.session.user.cart; //cart holds inactive orderID
+        const cart = req.session.client.cart; //cart holds inactive orderID
+        const orderID = cart.orderID;
         
         // Fetch book details from the database and add to cart
-        let act = 'finding book by bookID';
+        
         try {
-            const book = await InventoryManager.search_item('itemID', bookId); //get book by ID
-    
-            act = 'adding new order_item to cart';
-            if (!Array.isArray(book)) // create order_item if item returned
-            {
-                const cartItem = await InventoryManager.new_order_item(cart.orderID, bookId, quantity); // store quantity of item in cart
 
-                cart.items.push(cartItem);
-                req.flash('message', 'Item added to cart!');
+            let order = null;
+            // long term storage of cart with order
+            let act = 'creating new order';
+            if (!orderID && userID) {
+                order = await InventoryManager.new_order(userID, null, 'inactive', 0); // user logged in and cart empty
+                orderID = order.orderID;
             }
-            else req.flash('message', 'Book could not be found.');
-    
+            
+            act = 'finding item';
+            const book = await InventoryManager.search_item('itemID', bookId); //get book by ID
+            
+            // add item to cart
+            act = 'adding new order_item to cart';
+            if (book.length == 0) throw 'item could not be found'; 
+
+            // put item details in cart
+            let order_item = null;
+            act = 'adding to cart';
+            cart.items.forEach(item => {
+                if (item.itemID == bookId) { // item already exists
+                    console.log('item already exists. increasing quantity');
+
+                    const addCost = book.price * quantity; // cost of adding current items
+                    item.quantity += quantity; // increase item quantity
+
+                    item.cost += addCost; //increase item total
+                    cart.total += addCost;
+
+                    // increase item total in db
+                    if (userID) {
+                        order_item = InventoryManager.search_order_item('orderID', orderID);
+                        order_item.quantity += quantity;
+                    }
+
+                    req.flash('messages', 'Increased quantity in cart!');
+                    return res.redirect('/');
+                }
+            });
+
+            // store in database if logged in
+            if (userID) await InventoryManager.new_order_item(bookId, orderID, quantity); 
+
+            //create new item and store in cart
+            const item = { 
+                itemID: book.itemID, 
+                quantity: quantity, 
+                price:(book.price * quantity), 
+                coverImage: book.coverImage 
+            }
+
+            cart.items.push(item);
+
+            req.flash('messages', 'Item added to cart!');
             return res.redirect('/');
         
         } catch (err) {

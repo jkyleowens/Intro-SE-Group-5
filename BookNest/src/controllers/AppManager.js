@@ -22,16 +22,17 @@ class AppManager
 {
     #router;
     #sequelize;
-    #storage; #upload;
+    
 
-    constructor (root, port) 
+    constructor () 
     {
         this.app = null;
         this.server = null;
+        this.upload = null;
+
         this.imgStore = null;
 
-        this.root = root;
-        this.port = port;
+        this.cookieExpires = 60; // num minutes until session resets
     }
 
     // success/failure callbacks
@@ -46,13 +47,13 @@ class AppManager
     }
 
     // start sequelize
-    async initSequelize()
+    async InitSequelize(root)
     {
 
         let sequelize = new Sequelize('database', 'booknest', null, {
             host: 'localhost',
             dialect: "sqlite",
-            storage: path.join(this.root, 'Backend')
+            storage: path.join(root, 'src', 'database.db')
         });
     
         try {
@@ -88,32 +89,78 @@ class AppManager
                 foreignKey: 'itemID'
             });
     
-            this.#sequelize = sequelize.sync();
+            this.#sequelize = await sequelize.sync();
     
         } catch (err) {
             throw err;
         }
     }
 
+    async CloseApp()
+    {
+        try {
+            await this.#sequelize.close();
+
+            await this.server.close(() => {
+                console.log('express server closed.');
+            });
+
+        } catch (err) {
+            this.failure('closing AppManager', err);
+        }
+    }
+
     // init controllers, app, server, and middleware
-    async initApp()
+    async InitApp(root)
     {
         try {
 
             if (!this.#sequelize) throw new Error('sequelize not found');
 
-            InventoryManager.UpdateModels(this.#sequelize);
-            UserManager.UpdateModels(this.#sequelize);
+            await InventoryManager.UpdateModels(this.#sequelize);
+            await UserManager.UpdateModels(this.#sequelize);
 
             const app = express();
-            this.server = app.server;
 
-            //init controllers
+            const pub = path.join(root, 'public'); // BookNest/public
+            // static files
+            app.use(express.static(pub));
+            this.imgStore = path.join(pub, 'uploads');
 
-            this.router = new ViewRouter();
+            // Configure Multer for file uploads
+            const storage = multer.diskStorage({
+                destination: this.imgStore, // Save images here
+
+                filename: (req, file, cb) => { // unique fileName
+                    const isbn = req.body.isbn;
+                    const unique = Date.now() + '-' + isbn;
+                    const ext = '.jpg';
+
+                    cb(null, (unique + ext)); // Unique file name + extension
+                },
+            });
+
+            this.upload = multer({ storage: storage }); 
+
+            // init session
+            app.use(session({
+                secret: 'your-secret-key', // Change this to a strong secret
+                resave: false,
+                saveUninitialized: true,
+                cookie: { maxAge: 1000 * (60 * this.cookieExpires) } // cookie expires after an hour
+            }));
+
+            // new client object to store details and cart
+            app.use((req, res, next) => {
+                if (!req.session.client) {
+                    req.session.client = new UserClient;
+                }
+                next();
+            });
 
             // ejs view engine
             app.set('view engine', 'ejs');
+            app.set('views', path.join(root, 'src', 'views'));
 
             // use json for middleware
             app.use(express.json());
@@ -121,46 +168,9 @@ class AppManager
             // Initialize flash messages
             app.use(flash());
 
-            // init session
-            app.use(session({
-                secret: 'your-secret-key', // Change this to a strong secret
-                resave: false,
-                saveUninitialized: true,
-            }));
-
-            const pub = path.join(this.root, 'public'); // BookNest/public
-
-            // static files
-            app.use(express.static(pub));
-
-            this.imgStore = path.join(pub, 'uploads'); // public/uploads
-
-            InventoryManager.UpdateMulter(this.imgStore);
-
-            // Initialize the session client on first visit
-            app.use(async (req, res, next) => {
-                
-                try {
-                    let cli = req.session.client;
-                    if (!cli) {
-                        cli = new UserClient;
-
-                        
-                    }
-
-                } catch {
-
-                }
-                
-                next();
-            });
-
-            
-            
-
             // Make flash messages accessible in templates
             app.use((req, res, next) => {
-                res.locals.flashMessage = req.flash('info'); // or 'error', depending on your usage
+                res.locals.messages = req.flash('messages'); // or 'error', depending on your usage
                 next();
             });
 
@@ -168,12 +178,15 @@ class AppManager
 
             // Middleware to parse form data
             app.use(express.urlencoded({ extended: true }));
+
+            const router = new ViewRouter();
+            app.use(router.router)
             
             this.app = app;
-            return this.app;
+            return app;
 
         } catch (err) {
-            throw err;
+            this.failure('initializing app', err);
         }
         
     }
