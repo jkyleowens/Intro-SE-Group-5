@@ -11,7 +11,6 @@ import init_order from '../models/order.js';
 import init_user from '../models/user.js';
 
 import UserManager from './UserManager.js';
-import UserClient from '../../public/javascript/UserClient.js';
 import InventoryManager from './InventoryManager.js';
 
 import ViewRouter from '../routes/ViewRouter.js';
@@ -20,8 +19,7 @@ import { fileURLToPath } from 'url';
 
 class AppManager
 {
-    #router;
-    #sequelize;
+    #sequelize = null;
     
 
     constructor () 
@@ -42,8 +40,9 @@ class AppManager
     }
     failure(action, err)
     {
-        let msg = action + ' failed: ' + err;
-        throw new Error(msg);
+        let msg = 'AppManager: ' + action + ' failed: ' + err;
+        console.error(msg);
+        return msg;
     }
 
     // start sequelize
@@ -92,21 +91,23 @@ class AppManager
             this.#sequelize = await sequelize.sync();
     
         } catch (err) {
-            throw err;
+            throw new Error(this.failure('initializing sequelize', err));
         }
     }
 
     async CloseApp()
     {
         try {
-            await this.#sequelize.close();
+            if (this.#sequelize != null) await this.#sequelize.close();
+
+            if (!this.server) throw 'server not initialized';
 
             await this.server.close(() => {
                 console.log('express server closed.');
             });
 
         } catch (err) {
-            this.failure('closing AppManager', err);
+            throw new Error(this.failure('closing AppManager', err));
         }
     }
 
@@ -153,7 +154,12 @@ class AppManager
             // new client object to store details and cart
             app.use((req, res, next) => {
                 if (!req.session.client) {
-                    req.session.client = new UserClient;
+                    console.log('Creating new session client object');
+                    // client object with user and cart details
+                    req.session.client = { 
+                        userID: null, 
+                        cart: { orderID: null, items: [] } //items array of { itemID, quantity, price, cover }
+                    } 
                 }
                 next();
             });
@@ -179,14 +185,15 @@ class AppManager
             // Middleware to parse form data
             app.use(express.urlencoded({ extended: true }));
 
-            const router = new ViewRouter();
-            app.use(router.router)
+            const viewRouter = new ViewRouter();
+            app.use(viewRouter.router);
+            
             
             this.app = app;
             return app;
 
         } catch (err) {
-            this.failure('initializing app', err);
+            throw new Error(this.failure('initializing app', err));
         }
         
     }

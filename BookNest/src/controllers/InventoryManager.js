@@ -27,6 +27,13 @@ class InventoryManager
         this.upload = null; 
     }
 
+    failure(act, err)
+    {
+        const msg = 'User manager: ' + act + ' failed: ' + err;
+        console.error(msg);
+        return msg;
+    }
+
     // update class model properties
     async UpdateModels(sequelize)
     {
@@ -39,35 +46,48 @@ class InventoryManager
             this.#order_item = sequelize.models.order_item;
 
         } catch (err) {
-            throw 'InventoryManager: ' + err;
+            throw new Error(this.failure('getting models', err));
         }
     }
 
     async search_item(attribute, value)
     {
-        const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
-        const match = await this.#item.findAll({ where: condition });
-        // return one item or array
-        if (match.length === 1) return match[0];
-        return match;
+        try {
+            const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
+            const match = await this.#item.findAll({ where: condition });
+            // return one item or array
+            if (match.length === 1) return match[0];
+            return match;
+        } catch (err) {
+            throw new Error(this.failure('searching items', err));
+        }
     }
 
     async search_order(attribute, value)
     {
-        const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
-        const match = await this.#order.findAll({ where: condition });
-        // return one item or array
-        if (match.length === 1) return match[0];
-        return match;
+        try {
+            const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
+            const match = await this.#order.findAll({ where: condition });
+            // return one item or array
+            if (match.length === 1) return match[0];
+            return match;
+        } catch (err) {
+            throw new Error(this.failure('searching orders', err));
+        }
+
     }
 
     async search_order_item(attribute, value)
     {
+        try {
         const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
         const match = await this.#order_item.findAll({ where: condition });
         // return one item or array
         if (match.length === 1) return match[0];
         return match;
+        } catch (err) {
+            throw new Error(this.failure('searching order_items', err));
+        }
     }
 
 
@@ -89,7 +109,7 @@ class InventoryManager
             return temp;
 
         } catch (err) {
-            throw 'InventoryManager: ' + err;
+            throw new Error(this.failure('creating new item', err));
         }
     }
 
@@ -107,7 +127,7 @@ class InventoryManager
             return temp;
 
         } catch (err) {
-            throw 'InventoryManager: ' + err;
+            throw new Error(this.failure('creating new order', err));
         }
     }
 
@@ -124,7 +144,7 @@ class InventoryManager
             return temp;
 
         } catch (err) {
-            throw 'InventoryManager: ' + err;
+            throw new Error(this.failure('creating new order_item', err));
         }
     }
 
@@ -177,7 +197,7 @@ class InventoryManager
             order.save();
 
         } catch (err) {
-            throw new Error(`can't place order ${orderID}: ` + err);
+            throw new Error(this.failure(`placing order ${orderID}`, err));
         }
     }
 
@@ -209,7 +229,7 @@ class InventoryManager
             return book;
 
         } catch (err) {
-            throw 'InventoryManager: ' + err;
+            throw new Error(this.failure('creating new book', err));
         }
     }
 

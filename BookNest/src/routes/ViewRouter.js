@@ -1,16 +1,14 @@
 import express from 'express';
 import path from 'path';
+import flash from 'connect-flash';
 
 import AppManager from '../controllers/AppManager.js';
 import InventoryManager from '../controllers/InventoryManager.js';
 import UserManager from '../controllers/UserManager.js';
-import UserClient from '../../public/javascript/UserClient.js';
 
 // initializes and handles routes
 class ViewRouter
 {
-    #index = 'index'; 
-    #pages = 'pages/';
 
     constructor(upload)
     {
@@ -38,11 +36,10 @@ class ViewRouter
         
         router.post('/remove-book', this.RemoveBook);
         router.post('/process-checkout', this.Checkout);
-        router.post('/register', this.StartRegister);
 
         // api
-        router.post('/api/login', this.PostLogin);
-        router.post('api/register', this.PostRegister);
+        router.post('/api/register', this.Register);
+        router.post('/api/login', this.Login);
 
         // add new book upon post from client
         router.post('/add-book', AppManager.upload.fields([
@@ -64,12 +61,9 @@ class ViewRouter
         let books = null, objArr = [];
 
         try {
-            
             books = await InventoryManager.search_item(null, null); // get all featured books
-
         } catch (err) {
-            AppManager.failure('getting all books', err);
-            req.flash('messages', 'could not get books from database');
+            throw err;
         }
 
         if (!Array.isArray(books)) {
@@ -108,28 +102,28 @@ class ViewRouter
     }
 
     // middleware for login
-    PostLogin = async (req, res, next) => {   
+    Login = async (req, res, next) => {   
         // parse json string for details
-        const { email, password } = JSON.parse(req.body);
-
-        let clientID, result;                // **** SET client.id in SESSION **** 
+        const email = req.body.email;
+        const password = req.body.password.trim();
 
         try {
             // check if user logged in
             const client = req.session.client; // UserClient userID
             if (client.userID != null) throw 'user already logged in'
 
-            result = await UserManager.LoginUser(email, password); // send login request 
+            const userID = await UserManager.LoginUser(email, password); // send login request 
 
-            req.flash('Login was successful!');
+            if (typeof userID == 'string') throw userID;
+            
+            client.userID = userID;
+            client.name = user.name;
 
             // check if cart saved in db
             let order = null, orderItem = null;
-            const temp = InventoryManager.search_order('userID', result);
-            const user = await UserManager.ValidateUsers({arg: 'userID', value: result})[0];
-            
-            client.userID = result;
-            client.name = user.name;
+            const temp = await InventoryManager.search_order('userID', result);
+            const user = await UserManager.ValidateUsers({arg: 'userID', value: userID})[0];
+
             
             // one inactive order
             if (!Array.isArray(temp) && temp.status == 'inactive') {
@@ -145,22 +139,22 @@ class ViewRouter
                 }
             }
 
-            // order not found, new inactive order
+            // order not found, new inactive db order for cart
             if (!order) {
-                order = await InventoryManager.new_order(result, null, 'inactive', 0);
+                order = await InventoryManager.new_order(userID, null, 'inactive', 0);
             }
-            // get items in cart
+            // get items in cart db order
             else {
                 orderItem = await InventoryManager.search_order('orderID', order.orderID);
             }
 
             // return if no items in stored cart
             if (orderItem.length == 0) {
-                console.log('no items in user cart.');
+                console.log('no items in db for user cart.');
                 return res.redirect('/');
             }
 
-            // fill client cart with items from stored cart
+            // loop through order_item in db
             for (let i = 0; i < orderItem.length; i++) {
                 const temp = orderItem[i];
                 const item = InventoryManager.search_item('itemID', temp.itemID);
@@ -169,9 +163,33 @@ class ViewRouter
                 const price = item.price;
                 const cover = item.coverImage;
 
+                const cart = client.cart.items;
+                let cartItem = null;
+
+                // check if stored item in session cart
+                for (let i = 0; i < cart.length; i++) {
+
+                    if (cart[i] != itemID) continue; // loop until same item
+
+                    // store cart item if found
+                    cartItem = client.cart.items[i];
+                    break;
+                }
+
+                //if db item found in cart, update quantity and total, check next item
+                if (cartItem) {
+                    cartItem.quantity += temp.quantity;
+                    cartItem.total += price * temp.quantity;
+                    temp.quantity = cartItem.quantity;
+                    continue;
+                }
+
+                //create new item in session cart otherwise
                 const quantity = temp.quantity;
+                
                 const total = quantity * price;
 
+                // create object with item's details needed for cart
                 const obj = { 
                     itemID: itemID, 
                     quantity: quantity, 
@@ -179,78 +197,56 @@ class ViewRouter
                     coverImage: cover
                 };
 
-                client.cart.items.push(obj);
+                client.cart.items.push(obj); //add item object to cart items array
             }
             
-
+            req.flash('messages', 'Login was successful!');
+            return res.redirect('/');
 
             
         } catch (err) {
-            req.flash('message', ('Login was unsuccessful: ' + err));
-            return res.redirect('/login');
+            req.flash('messages', ('Login was unsuccessful: ' + err));
+            return res.redirect('/');
         }
     }
 
     ViewRegister = (req, res) => {
         // render index.ejs with register embedded
         res.render('index', {
-            title: 'Login',
+            title: 'Register',
             content: './pages/register'
         });
     }
 
-    StartRegister = async (req, res) => {
+    // middleware called upon /api/register posted by client
+    Register = async (req, res) => {
 
-        const name = req.body.username;
+        const username = req.body.name;
         const email = req.body.email;
         const password = req.body.password;
 
         try {
+            // check if client object exists
             const client = req.session.client;
 
-            if (!client) throw 'UserClient not found';
+            if (client.userID) throw 'user already logged in';
 
-            const userID = await client.RegisterUser(name, email, password);
+            const userID = await UserManager.RegisterUser(username, email, password);
+            
+            
+            console.log('Successfully registered user with userID: ' + userID);
 
-            if (client.userID != userID) throw 'user registration failed';
-
-            req.flash('messages', 'Registration successful! You may now login.');
+            // send userID back to client
+            req.flash('messages', 'Registration was successful! You may now log in.');
             return res.redirect('/login');
 
         } catch (err) {
             req.flash('messages', 'Registration failed: ' + err);
+            return res.redirect('/');
         }
         
     }
 
-    PostRegister = async (req, res) => {
-        // parse json string for data
-        const obj = req.body.json();
-
-        const username = obj.username;
-        const email = obj.email;
-        const password = obj.password;
-
-        // Validate input: Make sure email and password are not empty
-        let act = 'registering new user'
-
-        // Insert new user into the database
-        try {
-            const userID = await UserManager.RegisterUser(username, email, password);
-
-            console.log(`User registered with ID: ${userID}`);
-            req.flash() = 'Registration successful! Please log in.';
-
-            const obj = { userID: userID };
-
-            return res.json(obj);
-
-        } catch (err) {
-            AppManager.failure(act, err);
-            req.flash() = 'Registration failed. Please try again.';
-            return res.redirect('/register');
-        }
-    }
 
     ViewCart = async (req, res) => {
 
