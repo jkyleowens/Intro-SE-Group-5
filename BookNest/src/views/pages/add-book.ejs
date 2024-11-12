@@ -6,7 +6,7 @@
     <title>Add Book</title>
     <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Link to your custom CSS file if needed -->
+    <link rel="stylesheet" href="./stylesheet.css"> <!-- Link to your custom CSS file if needed -->
 </head>
 <body>
     <div class="container mt-6">
@@ -15,7 +15,7 @@
         </header>
         
         <main>
-            <form action="/add-book" method="POST" enctype="multipart/form-data">
+            <form method="post" id="book-form" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="isbn">ISBN:</label>
                     <input type="text" class="form-control" id="isbn" name="isbn" required>
@@ -58,5 +58,6 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="module" src="./javascript/add-book.js"></script>
 </body>
 </html>

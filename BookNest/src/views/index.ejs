@@ -9,45 +9,66 @@ header for the navigation bar and a div below that acts as a container for the o
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> <%= title %> </title>
+    <link rel="stylesheet" href="./stylesheet.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     
 </head>
 <body>
+    
+    <!-- Navbar -->
+    <nav class="navbar-top">
+        <button class="navbar-link" onclick="window.location.href='/'"><h1>BookNest</h1></button>
+        <div></div>
+
+        <button class="navbar-link" onclick="window.location.href='/'"><h3>Home</h3></button>
+
+
+        <button class="navbar-link" onclick="window.location.href='/cart'"><h3>My Cart</h3></button>
+
+
+        <button class="navbar-link" onclick="window.location.href='/login'"><h3>Login</h3></button>
+    
+
+        <button class="navbar-link" onclick="window.location.href='/register'"><h3>Register</h3></button>
+
+    </nav>
+
     <%# render any flash messages %>
     <% if (messages.length > 0) { %>
-        <div class="alert alert-info" role="alert">
+        <div id="flash-message" class="info-message" role="alert">
             <% messages.forEach((msg) => { %>
                 <p> <%= msg %> </p>
             <% }); %>
         </div>
         <% } %>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">BookNest</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/cart">Cart</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/login">Login</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/register">Register</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
 
     <%# div content changes if user navigates pages %>
     <div id="content">
         <%- include(content) %>
     </div>
-    
+
+    <script>// clear flash messages after 1s
+        setTimeout(() => {
+            const flashMessage = document.getElementById('flash-message');
+
+            if (flashMessage) {
+
+                flashMessage.style.transition = "opacity 0.5s";
+                flashMessage.style.opacity = 0;
+
+                setTimeout(() => {
+                    flashMessage.remove();
+                }, 500);
+            }
+        }, 4000);
+    </script>
+    <!-- Footer -->
+    <footer class="footer">
+        <div>
+            <p>&copy; 2024 BookNest. All rights reserved.</p>
+            <a href="/about">About Us</a> | 
+            <a href="/contact">Contact</a>
+        </div>
+    </footer>
 </body>
 </html>

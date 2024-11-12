@@ -4,55 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %></title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./stylesheet.css">
+    
 </head>
 <body>
-    <div class="container mt-5">
-        <header>
-            <h1 class="text-center">Welcome to BookNest</h1>
-        </header>
+    <div class="listing-container">
 
-        <div class="row">
-            <% objArr.forEach((obj) => { %>
-                <% 
-                    const book = obj.book;
-                    const coverImage = obj.imgPath;
-                %>
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <img src="<%= coverImage %>" class="card-img-top" alt="<%= book.name %>">
-                        <div class="card-body">
-                            <h5 class="card-title"><%= book.name %></h5>
-                            <p class="card-text">Author: <%= book.author %></p>
-                            <p class="card-text">Price: $<%= book.price %></p>
-                            <form action="/add-to-cart" method="POST">
-                                <input type="hidden" name="bookId" value="<%= book.itemID %>">
-                                <input type="number" name="quantity" value="1"/>
-                                <button type="submit" class="btn btn-primary">Add to Cart</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            <% }) %>
-        </div>
+        <% objArr.forEach((obj, i) => { %>
+            <% 
+                const isbn = obj.isbn;
+                const name = obj.name;
+                const author = obj.author;
+                const price = obj.price;
+                const coverImage = obj.coverImage;
+            %>
+            <div class="item-listing" name="item-listing">
+                <div class="cover-img-div"> <img style="max-width:100%;height:auto" src="<%= coverImage %>" alt="<%= name %>"/> </div>
+                <div> <p> <%= isbn %> </p> <h3> <%= name %> </h3> </div>
+                <div> <h5> by <%= author %> </h5> </div>
+                <div> <p> Price: $<%= price %> </p></div>        
+                <form name="add-cart-form" method="POST">
+                    <input type="hidden" id="isbn" name="isbn" value="<%= isbn %>"/>
+                    <input type="number" id="quantity" name="quantity" value="1"/>
+                    <button type="submit">Add to Cart</button>
+                </form>
+                    
+            </div>
+        <% }) %>
 
-        <!-- View Cart Button -->
-        <div class="text-center mt-4">
-            <a href="/cart" class="btn btn-success">View Cart</a>
-        </div>
     </div>
-
-    <!-- Footer -->
-    <footer class="bg-light text-center text-lg-start mt-5">
-        <div class="text-center p-3">
-            <p>&copy; 2024 BookNest. All rights reserved.</p>
-            <a class="text-dark" href="/about">About Us</a> | 
-            <a class="text-dark" href="/contact">Contact</a>
-        </div>
-    </footer>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="module" src="./javascript/add-cart.js"></script>
 </body>
 </html> 
+
+<%# <header>
+            <h1 class="text-center">Welcome to BookNest</h1>
+        </header> %>

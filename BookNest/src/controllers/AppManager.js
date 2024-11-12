@@ -1,5 +1,4 @@
 import { Sequelize } from 'sequelize';
-import multer from 'multer';
 import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash'
@@ -14,8 +13,7 @@ import UserManager from './UserManager.js';
 import InventoryManager from './InventoryManager.js';
 
 import ViewRouter from '../routes/ViewRouter.js';
-
-import { fileURLToPath } from 'url';
+import APIRouter from '../routes/APIRouter.js';
 
 class AppManager
 {
@@ -127,22 +125,6 @@ class AppManager
             // static files
             app.use(express.static(pub));
             this.imgStore = path.join(pub, 'uploads');
-
-            // Configure Multer for file uploads
-            const storage = multer.diskStorage({
-                destination: this.imgStore, // Save images here
-
-                filename: (req, file, cb) => { // unique fileName
-                    const isbn = req.body.isbn;
-                    const unique = Date.now() + '-' + isbn;
-                    const ext = '.jpg';
-
-                    cb(null, (unique + ext)); // Unique file name + extension
-                },
-            });
-
-            this.upload = multer({ storage: storage }); 
-
             // init session
             app.use(session({
                 secret: 'your-secret-key', // Change this to a strong secret
@@ -154,12 +136,13 @@ class AppManager
             // new client object to store details and cart
             app.use((req, res, next) => {
                 if (!req.session.client) {
-                    console.log('Creating new session client object');
                     // client object with user and cart details
                     req.session.client = { 
                         userID: null, 
-                        cart: { orderID: null, items: [] } //items array of { itemID, quantity, price, cover }
+                        name: null,
+                        cart: { orderID: null, items: [] } //items [...[itemID, quantity]]
                     } 
+                    console.log('Client session object created!');
                 }
                 next();
             });
@@ -180,14 +163,11 @@ class AppManager
                 next();
             });
 
-            //load frontend static files
-
             // Middleware to parse form data
             app.use(express.urlencoded({ extended: true }));
-
-            const viewRouter = new ViewRouter();
-            app.use(viewRouter.router);
             
+            app.use('/', ViewRouter.router);
+            app.use('/api', APIRouter.router);
             
             this.app = app;
             return app;

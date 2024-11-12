@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import AppManager from './src/controllers/AppManager.js';
 
-
 const filename = fileURLToPath(import.meta.url);
 
 

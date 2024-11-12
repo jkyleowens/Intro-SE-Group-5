@@ -1,5 +1,5 @@
 
-const emailFormat = /^[a-zA-Z0-9(%-.)?]@[a-zA-Z0-9]+\.[a-zA-Z]+([.][a-zA-Z])?$/;; //regex for email format
+const emailFormat = /^[a-zA-Z0-9]+[(.-_%)?a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,3}[(.)?a-zA-Z]{0,2}$/; //regex for email format
 
 // content loaded, setup event listeneres
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -13,37 +13,45 @@ async function SendLogin(event)
 {
 
     try {
-
-        const email = document.getElementById('login-email').value;
-        const password = document.getElementById('login-password').value
-
         // prevent default submit action
         event.preventDefault();
 
-        //validate input
-        if (!email || !password) throw 'email and password must be filled'; // field empty
-        if (emailFormat.test(email)) throw 'the email you entered is not in a valid format'; // invalid format
+        const form = event.target;
+        const formData = new FormData(form);
+        
 
-        const details = JSON.stringify({ email:email, password:password });
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const dataObject = new Object({email:email, password:password});
+        const toSend = JSON.stringify(dataObject);
+
+        //validate input
+        if (!emailFormat.test(dataObject.email)) throw 'the email you entered is not in a valid format'; // invalid format
+
+        const details = JSON.stringify({ email: email, password: password });
 
         // post ---> /api/login ---> UserRouter
-        const res = await fetch('/api/login', {
+        const response = await fetch('/api/login', {
 
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: details // send string with details
+            body: details // send form data to backend
         });
 
-        // unsuccessful
-        if (!res.ok) {
-            throw res.statusText;
+        if (!response.ok) {
+            throw `request failed with status: ${response.status}`;
         }
 
-        return;
+        const result = await response.json();
+
+        // unsuccessful
+        if (!result.success) window.location.href = '/login';
+        else window.location.href = '/';
 
     } catch (err) {
+        console.error(err);
         throw new Error(err);
     }
 }

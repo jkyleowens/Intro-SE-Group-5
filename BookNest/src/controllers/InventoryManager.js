@@ -9,12 +9,7 @@ class InventoryManager
     #order_item;
 
     //multer
-    #storage; 
-
-    // storage arrays
-    #inv = []; // inv [ { item } ]
-    #orders = []; // orders [ { order_item } ]
-
+    #storage;
 
     constructor()
     {
@@ -50,12 +45,14 @@ class InventoryManager
         }
     }
 
+
     async search_item(attribute, value)
     {
         try {
             const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
             const match = await this.#item.findAll({ where: condition });
             // return one item or array
+            if (match.length == 0) return null;
             if (match.length === 1) return match[0];
             return match;
         } catch (err) {
@@ -63,28 +60,52 @@ class InventoryManager
         }
     }
 
-    async search_order(attribute, value)
+    async search_order(...arg)
     {
         try {
-            const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
-            const match = await this.#order.findAll({ where: condition });
+            let ret = [];
+            // loop through object arguments in arg[]
+            for (let i = 0; i < arg.length; i++) {
+                const {attr, value} = arg.at(i);
+                if ((!attr && value) || (attr && !value)) throw `invalid arguments at arg[${i}]: {attr,val} was {${attr}, ${value}}`;
+
+                if (attr == 'orderID') return await this.#order.findByPk(value);
+                const condition = (attr && value) ? { [attr] : value } : {}; // find attribute of value if given
+                const match = await this.#order.findAll({ where: condition }); // get all matches
+
+                match.forEach( (order) => ret.push(order));
+            }
+            
             // return one item or array
-            if (match.length === 1) return match[0];
-            return match;
+            if (ret.length == 0) return null;
+            if (ret.length == 1) return ret[0];
+            return ret;
+
         } catch (err) {
             throw new Error(this.failure('searching orders', err));
         }
 
     }
 
-    async search_order_item(attribute, value)
+    async search_order_item(...arg)
     {
         try {
-        const condition = (attribute && value) ? { [attribute] : value } : {}; // find attribute of value if given
-        const match = await this.#order_item.findAll({ where: condition });
-        // return one item or array
-        if (match.length === 1) return match[0];
-        return match;
+            let ret = []
+            // loop through object arguments in arg[]
+            for (let i = 0; i < arg.length; i++) {
+                const {attr, value} = arg.at(i);
+                if ((!attr && value) || (attr && !value)) throw `invalid arguments at arg[${i}]: {attr,val} was {${attr}, ${value}}`;
+
+                const condition = (attr && value) ? { [attr] : value } : {}; // find attribute of value if given
+                const match = await this.#order_item.findAll({ where: condition }); // get all matches
+
+                match.forEach( (order) => ret.push(order));
+            }
+            
+            // return one item or array
+            if (ret.length == 0) return null;
+            return ret;
+
         } catch (err) {
             throw new Error(this.failure('searching order_items', err));
         }
@@ -148,53 +169,38 @@ class InventoryManager
         }
     }
 
-    async PlaceOrder(orderID, shipping=null, )
+    async PlaceOrder(orderID, shipping=null)
     {
-        const inv = this.#inv;
 
         try {
-            //find order with id
-            const order = await this.search_order('orderID', orderID);
-            if (order.length === 0) throw `order with ID: ${orderID} not found`;
-            if (order.status == 'active') throw `order with ID: ${orderID} is active`;
 
-            // CHARGE CARD HERE
-
-            this.#orders.push(order);
-
-            //get order_items matched to order
-            let res = await this.search_order_item('orderID', orderID);
-            const arr = (res.length === 0) ? () => { throw 'cart is empty' } : arr;
-
-            res = (!Array.isArray(arr)) ? [arr] : arr; // encaps in array if 1 
-            
             let totalPrice = 0;
 
+            const order = await this.search_order('orderID', orderID);
+            if (!order) throw `order with ID: ${orderID} not found`;
+            const cart = await this.search_order_item({ attr: 'orderID', value: orderID});
+
+            //get user payment
+            // try payment, if failed return without placing
+
             //update inventory 
-            res.forEach(async element => {
+            cart.forEach(async orderItem => {
 
-                const bookID = element.itemID;
-                const quantity = element.quantity;
-                
-                const item = await this.search_item('itemID', bookID); // get book from order_item
+                const item = await this.search_item('itemID', orderItem.itemID);
+                const cost = item.price * orderItem.quantity;
 
-                // add price
-                totalPrice += item.price * quantity;
-
-                if (item.stock < quantity) throw `not enough of item ${bookID} in stock`;
+                if (item.stock < orderItem.quantity) throw `not enough of item ${item.itemID} in stock`;
+                totalPrice += cost;
                 
                 // update stock 
                 item.stock -= quantity;
-                
-                item.save();
-                 // add order_item to orders
-                
+                await item.save();
             });
 
             // set order details
             order.total = totalPrice;
             order.status = 'pending';
-            order.save();
+            await order.save();
 
         } catch (err) {
             throw new Error(this.failure(`placing order ${orderID}`, err));
@@ -207,15 +213,14 @@ class InventoryManager
         try {
 
             // extract details and make new item
-            const { isbn, name, author, price, stock, coverImage } = JSON.parse(details);
+            const { isbn, name, author, price, stock, coverImage } = details;
 
-            this.#inv.forEach(book => {
-                if (book.itemID == isbn) throw 'book already exists';
-            })
+            let book = this.search_item('itemID', isbn);
+            if (book) throw `item with ID: ${isbn} already exists`;
 
             if (!this.#item) throw 'item model not found';
 
-            const book = await this.#item.create({
+            book = await this.#item.create({
                 itemID: isbn,
                 name: name,
                 author: author,
@@ -224,9 +229,7 @@ class InventoryManager
                 coverImage: coverImage
             });
 
-            this.#inv.push(book);
-
-            return book;
+            return isbn;
 
         } catch (err) {
             throw new Error(this.failure('creating new book', err));
