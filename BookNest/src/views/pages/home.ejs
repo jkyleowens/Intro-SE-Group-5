@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="stylesheet" href="./stylesheet.css">
+    
+</head>
+<body>
+    <div class="listing-container">
+
+        <% objArr.forEach((obj, i) => { %>
+            <% 
+                const isbn = obj.isbn;
+                const name = obj.name;
+                const author = obj.author;
+                const price = obj.price;
+                const coverImage = obj.coverImage;
+            %>
+            <div class="item-listing" name="item-listing">
+                <div class="cover-img-div"> <img style="max-width:100%;height:auto" src="<%= coverImage %>" alt="<%= name %>"/> </div>
+                <div> <p> <%= isbn %> </p> <h3> <%= name %> </h3> </div>
+                <div> <h5> by <%= author %> </h5> </div>
+                <div> <p> Price: $<%= price %> </p></div>        
+                <form name="add-cart-form" method="POST">
+                    <input type="hidden" id="isbn" name="isbn" value="<%= isbn %>"/>
+                    <input type="number" id="quantity" name="quantity" value="1"/>
+                    <button type="submit">Add to Cart</button>
+                </form>
+                    
+            </div>
+        <% }) %>
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="module" src="./javascript/add-cart.js"></script>
+</body>
+</html> 
+
+<%# <header>
+            <h1 class="text-center">Welcome to BookNest</h1>
+        </header> %>

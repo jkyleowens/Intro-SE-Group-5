@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Book</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./stylesheet.css"> <!-- Link to your custom CSS file if needed -->
+</head>
+<body>
+    <div class="container mt-6">
+        <header>
+            <h1 class="text-center">Add a New Book</h1>
+        </header>
+        
+        <main>
+            <form method="post" id="book-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="isbn">ISBN:</label>
+                    <input type="text" class="form-control" id="isbn" name="isbn" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Book Name:</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="author">Author:</label>
+                    <input type="text" class="form-control" id="author" name="author" required>
+                </div>
+                <div class="form-group">
+                    <label for="price">Price:</label>
+                    <input type="number" class="form-control" id="price" name="price" required step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="stock">Stock:</label>
+                    <input type="number" class="form-control" id="stock" name="stock" required step="1">
+                </div>
+                <div class="form-group">
+                    <label for="coverImage">Cover Image:</label>
+                    <input type="file" class="form-control" id="coverImage" name="coverImage" accept="image/*" required>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Add Book</button>
+                </div>
+            </form>
+            <div class="text-center mt-3">
+                <a href="/" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-5">
+            <p>&copy; 2024 BookNest</p>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (optional) -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script type="module" src="./javascript/add-book.js"></script>
+</body>
+</html>

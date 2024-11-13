@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart</title>
+    <link rel="stylesheet" href="./stylesheet.css"> <!-- Link to your custom CSS file if needed -->
+</head>
+<body>
+    <div class="container">
+        <h1>Your Cart</h1>
+            <% if (cart.length === 0) { %>
+                <div class="info-message" role="alert">
+                    <h3> Your cart is empty!</h3>
+                    <button class="option-button" onclick="window.location.href = '/home'"><h4>Catalog</h4></button>        
+                    
+                </div>
+            <% } else { %>
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Cover</th>
+                            <th scope="col">ISBN</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Author</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Total</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <%  for( let i = 0; i < cart.length; i++ ) { %>
+                        <%      
+                                const item = cart[i];   
+                                const isbn = item.itemID;
+                                const name = item.name;   
+                                const author = item.author;
+                                const quantity = item.quantity;
+                                const total = item.price * item.quantity;
+                                const coverImage = './uploads/' + item.coverImage;
+                        %>                    
+                                <td>
+                                    <img src="<%= coverImage %>" alt="<%= name %>" class="cover-img" style="width: 100px;">
+                                </td>
+                                <td><%= isbn %></td>
+                                <td><%= name %></td>
+                                <td><%= author %></td>
+                                <td><%= quantity %></td>
+                                <td>$<%= total %></td>
+                                <td>
+                                    <form name="remove-cart" method="POST">
+                                        <input type="hidden" name="isbn" value="<%= isbn %>">
+                                        <input type="number" name="quantity" class="input" min="0" val="0"/>
+                                        <button type="submit" class="option-button">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+                
+                <button class="option-button"> <h3>Checkout</h3></button>
+            <% } %>
+        
+        <footer class="text-center mt-5">
+            <p>&copy; 2024 BookNest</p>
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (optional) -->
+    <script type="module" src="./javascript/remove-cart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
