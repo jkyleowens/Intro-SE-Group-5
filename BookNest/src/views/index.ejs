@@ -26,16 +26,16 @@ header for the navigation bar and a div below that acts as a container for the o
         <button class="navbar-link" onclick="window.location.href='/cart'"><h3>My Cart</h3></button>
 
 
-        <button class="navbar-link" onclick="window.location.href='/login'"><h3>Login</h3></button>
+        <button class="navbar-link" onclick="window.location.href='/login'"><h3>Login/Register</h3></button>
     
 
-        <button class="navbar-link" onclick="window.location.href='/register'"><h3>Register</h3></button>
+        <button class="navbar-link" onclick="window.location.href='/add-book'"><h3>Add Book</h3></button>
 
     </nav>
 
     <%# render any flash messages %>
     <% if (messages.length > 0) { %>
-        <div id="flash-message" class="info-message" role="alert">
+        <div id="flash-message" class="info-message" style="height:fit-content;" role="alert">
             <% messages.forEach((msg) => { %>
                 <p> <%= msg %> </p>
             <% }); %>

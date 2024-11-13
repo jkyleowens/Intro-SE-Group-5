@@ -17,10 +17,10 @@ async function AddBook(event) {
         // send FormData object that multer will process
         const response = await fetch('/api/add-book', {
             method: 'POST',
-            body: toSend
+            body: formData
         });
 
-        if (!res.ok) throw res.statusText;
+        if (!response.ok) throw response.statusText;
 
         const result = await response.json();
 
@@ -31,6 +31,6 @@ async function AddBook(event) {
         }
 
     } catch (err) {
-        throw new Error(err);
+        console.log(new Error(err));
     }
 }
