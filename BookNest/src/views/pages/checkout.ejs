@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <header>
+            <h1 class="text-center">Checkout</h1>
+        </header>
+        
+        <main>
+                
+                <h4>Total: $<%= totalPrice %></h4>
+
+                <form class="text-form" action="/process-checkout" method="POST">
+                    <h3 class="mt-4">Shipping Information:</h3>
+                        <label for="name">Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+
+                        <label for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+
+
+                        <label for="zip">Zip Code</label>
+                        <input type="text" class="form-control" id="zip" name="zip" required>
+
+                    
+                        <h5 class="mt-4">Payment Information:</h5>
+
+                        <label for="cardNumber">Card Number</label>
+                        <input type="text" class="form-control" id="cardNumber" name="cardNumber" required>
+
+
+                        <label for="expiration">Expiration Date (MM/YY)</label>
+                        <input type="text" class="form-control" id="expiration" name="expiration" required>
+
+                        <label for="cvv">CVV</label>
+                        <input type="text" class="form-control" id="cvv" name="cvv" required>
+
+                        <button type="submit" class="btn btn-success">Complete Purchase</button>
+                </form>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 BookNest</p>
+            <button href="/" class="option-button"><h3>Back to Home</h3></button>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
