@@ -103,7 +103,7 @@ button {
   min-height: 100vh;
   display:grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: repeat(5, 1fr);
+  /* grid-template-rows: repeat(5, 1fr); */
   gap:2vh;
 
 }
@@ -202,4 +202,104 @@ button {
 
 .book-form {
 
+}
+
+
+/* olivia */
+body {
+  background-color: white;
+  font-family: "Comic Sans MS", sans-serif;
+}
+
+h1 {
+  color: black;
+  font-size: 2.5em; /* Reduced font size for better fit */
+  text-align: center;
+}
+
+
+.image-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px; /* Reduced gap between images */
+  padding: 10px; /* Reduced padding around the images */
+}
+
+.news-item {
+  text-align: left;
+  max-width: 280px; /* Reduced max width for each item */
+}
+
+.news-item img {
+  width: 100%;
+  height: auto;
+  box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.5);
+}
+
+.date {
+  color: gray;
+  font-size: 0.8em; /* Reduced font size */
+  margin-top: 5px;
+}
+
+.title {
+  font-size: 1.1em; /* Reduced font size */
+  margin: 5px 0;
+  color: black;
+}
+
+.summary {
+  font-size: 0.8em; /* Reduced font size */
+  color: #333;
+}
+
+/* olivia */
+body {
+  background-color: white;
+  font-family: "Comic Sans MS", sans-serif;
+}
+
+h1 {
+  color: black;
+  font-size: 2.5em; /* Reduced font size for better fit */
+  text-align: center;
+}
+
+.image-container {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px; /* Reduced gap between images */
+  padding: 10px; /* Reduced padding around the images */
+}
+
+.news-item {
+  text-align: left;
+  max-width: 280px; /* Reduced max width for each item */
+}
+
+.news-item img {
+  width: 100%;
+  height: auto;
+  box-shadow: 8px 8px 15px rgba(0, 0, 0, 0.5);
+}
+
+.date {
+  color: gray;
+  font-size: 0.8em; /* Reduced font size */
+  margin-top: 5px;
+}
+
+.title {
+  font-size: 1.1em; /* Reduced font size */
+  margin: 5px 0;
+  color: black;
+}
+
+.summary {
+  font-size: 0.8em; /* Reduced font size */
+  color: #333;
 }
