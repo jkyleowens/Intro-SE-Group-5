@@ -1,4 +1,5 @@
 import path from 'path'
+import { Op } from 'sequelize';
 
 // backend class for managing inventory and orders
 class InventoryManager
@@ -60,26 +61,38 @@ class InventoryManager
         }
     }
 
+    // search orders with any combinations of { fieldName, value } where fieldName is a string such as 'orderID' and value is the stored value to find
     async search_order(...arg)
     {
         try {
-            let ret = [];
+            const search = new Map; // map holds arguments
+            let final = [];
             // loop through object arguments in arg[]
             for (let i = 0; i < arg.length; i++) {
                 const {attr, value} = arg.at(i);
                 if ((!attr && value) || (attr && !value)) throw `invalid arguments at arg[${i}]: {attr,val} was {${attr}, ${value}}`;
 
-                if (attr == 'orderID') return await this.#order.findByPk(value);
-                const condition = (attr && value) ? { [attr] : value } : {}; // find attribute of value if given
-                const match = await this.#order.findAll({ where: condition }); // get all matches
+                search.set(attr, value) // new search term for where clause
+                console.log(`searching for orders with ${attr} of ${value}`);
 
-                match.forEach( (order) => ret.push(order));
+                if (attr == 'orderID') return await this.#order.findByPk(value);
             }
-            
-            // return one item or array
-            if (ret.length == 0) return null;
-            if (ret.length == 1) return ret[0];
-            return ret;
+            // get all terms into search object
+            const where = Object.fromEntries(search);
+
+            const orders = await this.#order.findAll({ where: where }); // search where attr[] = value[]
+            const result = new Set(orders); // exclude duplicates
+
+            console.log('search_order: %d orders found', result.size);
+            if (result.size == 0) return null;
+
+            for (const order of result) {
+                console.log('orderID: %d    userID: %s    status: %s    total: %s', order.orderID, order.userID, order.status, order.total);
+                if (result.size == 1) return order;
+            }
+
+            return result;
+        
 
         } catch (err) {
             throw new Error(this.failure('searching orders', err));
@@ -90,21 +103,31 @@ class InventoryManager
     async search_order_item(...arg)
     {
         try {
-            let ret = []
+            const search = new Map; // map holds arguments
+            let final = [];
             // loop through object arguments in arg[]
             for (let i = 0; i < arg.length; i++) {
                 const {attr, value} = arg.at(i);
                 if ((!attr && value) || (attr && !value)) throw `invalid arguments at arg[${i}]: {attr,val} was {${attr}, ${value}}`;
 
-                const condition = (attr && value) ? { [attr] : value } : {}; // find attribute of value if given
-                const match = await this.#order_item.findAll({ where: condition }); // get all matches
-
-                match.forEach( (order) => ret.push(order));
+                search.set(attr, value) // new search term for where clause
+                console.log(`searching order_item for ${attr} of ${value}`);
             }
-            
-            // return one item or array
-            if (ret.length == 0) return null;
-            return ret;
+            // get all terms into search object
+            const where = Object.fromEntries(search);
+
+            const items = await this.#order_item.findAll({ where: where }); // search where attr[] = value[]
+            const result = new Set(items); // exclude duplicates
+
+            console.log('search_order_item: %d items found', result.size);
+            if (result.size === 0) return null;
+
+            for (const item of result) {
+                console.log('orderID: %d    itemID: %s    quantity: %s', item.orderID, item.itemID, item.quantity);
+                final.push(item);
+            }
+
+            return final;
 
         } catch (err) {
             throw new Error(this.failure('searching order_items', err));

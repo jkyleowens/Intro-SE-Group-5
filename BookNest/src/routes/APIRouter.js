@@ -65,9 +65,9 @@ class APIRouter
 
             response.message = `You successfully logged in to user account ${user.userID}! No items found in previous session.`;
             
-            client.userID = user.userID;
+            req.session.client.userID = user.userID;
 
-            await UserManager.UpdateUserCart(client, req.session.client.cart.items);
+            await UserManager.UpdateUserCart(req.session.client, req.session.client.cart.items);
             
             response.message = `You successfully logged in as ${user.name}!`;
             req.flash(response.message);

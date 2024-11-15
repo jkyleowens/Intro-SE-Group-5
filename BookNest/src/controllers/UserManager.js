@@ -129,111 +129,89 @@ class UserManager
     // newArr(optional) & cartArr are arrays of [...[itemID, quantity]]
     async UpdateUserCart(user, cartArr=[[]], addArr=[[]]) 
     {
-        let order = [], data = []; // store inactive order only if user logged in
-
         const userID = user.userID;
+        let orderID = user.cart.orderID;
         try {
-            if (userID) {
-                order = await InventoryManager.search_order({attr:'userID', value:userID}, {attr:'status', value:'inactive'});
-                if (!order) order = await InventoryManager.new_order(userID, null, 'inactive');
-                user.cart.orderID = order.orderID;
-            }
             // block 1 ---> update cart with add
-            
-            console.log('block 1: creating maps');
+            console.log('block 1: \ncreating maps');
             const cartMap = new Map(cartArr); 
-            console.log('addArr map');
             const addMap = new Map(addArr);
-            const newMap = new Map([[]]);
-            console.log('block 1: creating sets');
-            const setA = new Set(addMap.keys()); // A = itemID to add
-            const setB = new Set(cartMap.keys()); // B = itemID in cart
+            let dataMap = null;
+            const newMap = new Map(cartMap.entries());
 
-            let setC = [], setD = [];
-            if (setA.size > 0) {
-                setC = setA.intersection(setB); // C = intersection (A U B) ---> similar items to update quantity
-                setD = setA.difference(setB); // D = A unique from B ---> new items to add
+            console.log('creating sets...');
+            let setA = new Set(addMap.keys()); // A = itemID to add
+            let setB = new Set(cartMap.keys()); // B = itemID in cart
+            let setX = [], setY = [], setZ = [];
+            let data = null, order = null;
+
+            if (userID) { // search/create cart order
+                order = await InventoryManager.search_order({attr:'userID', value:userID}, {attr:'status', value:'inactive'});
+                order = (order) ? order : await InventoryManager.new_order(userID, null, 'inactive', 0);
+
+                data = await InventoryManager.search_order_item({attr: 'orderID', value: order.orderID}); // get order items
+                dataMap = (data) ? new Map(data.map((item) => [item.itemID, item.quantity])) : null;
+                let setD = (dataMap) ? new Set(dataMap.keys()) : new Set;
+
+                for (const key of setD) { // merge database and cart
+                    if (!cartMap.has(key)) cartMap.set(key, dataMap.get(key));
+                    newMap.set(key, cartMap.get(key));
+                }
+
+                // set client cart order
+                orderID = order.orderID;
+                user.cart.orderID = orderID;
             }
 
+            let newSet = new Set(newMap.keys()); // new cart updated with db
+            
+            if (setA.size > 0) {
+                setX = setA.intersection(newSet); // added/removed items in cart
+                setY = setA.difference(newSet);
+            }
+                
+            // cart items being changed
+            for (const key of setX) newMap.set(key, (newMap.get(key), (addMap.get(key) + newMap.get(key))));
+
+            for (const key of setY) newMap.set(key, (addMap.get(key)));
             
 
-            console.log('adding items to cart');
-            // shared items of cart and new array
-            for (const key of setC) {
-                const val = addMap.get(key) + cartMap.get(key);
-                console.log(`adding ${addMap.get(key)} items with ID: ${key} to cart. The updated quantity is ${val}`);
-                newMap.set(key, Math.max(val, 0)); // newMap will replace db and cart items
-                if (newMap.get(key) < 1) newMap.delete(key);
-            }
-            // unique items to add to cart
-            for (const key of setD) {
-                console.log(`adding ${addMap.get(key)} items with ID: ${key} to cart. The updated quantity is ${addMap.get(key)}`);
-                newMap.set(key, addMap.get(key));
-            }
             console.log('updating client session');
             // empty session cart
             cartArr.splice(0, cartArr.length);
             // update cart
             for (const [key,val] of newMap.entries()) { 
-                if (!val || !key || val === 0) continue;
-                cartArr.push([key,val]); // newMap ---> cart
+                if (val < 1 || !val) continue;
+                console.log(`adding item ${key} with quantity ${val}`);
+                cartArr.push([key,val]); // newMap [key,val] ---> cart[]
             }
-            const prevCart = newMap;
 
-            // no DB access not logged in
+            // block 2 ---> sync database and cart if logged in
             if (!userID) return;
+            console.log('syncing database with cart');
 
-            // block 2 ---> sync database and cart
-            
-            // maps/sets for comparing
-            const dataMap = (data) ? new Map(data.map(obj => [obj.itemID, obj.quantity])) : new Map([[]]); // order_item map [...[itemID, num]] or [[]]
+            let dataSet = (dataMap) ? new Set(dataMap.keys()) : new Set;
 
-            const dataPrev = dataMap;
-            console.log('setting database map');
-            // for all new items set database quantity
-            for (const key of setA) {
-                dataMap.set(key, newMap.get(key));
-            }
-            
-            
-            console.log('performing set operations');
-            let setX, setY, setZ;
-            const dataSet = (dataMap) ? new Set(dataMap.keys()) : new Set([]); // set of database items
-            const newSet = (newMap) ? new Set(newMap.keys()) : new Set([]); // set for final cart 
-
-            if (dataSet.size > 0) {
-                setX = dataSet.symmetricDifference(newSet);
-                setY = dataSet.intersection(newSet);
-                setZ = dataSet.difference(newSet);
-            }
-            
-
-            console.log('syncing database and cart');
-
-            //loop similar items & set max
-            for (const key of setY) {
-                if (dataMap.get(key) > newMap.get(key)) newMap.set(key, dataMap.get(key));
-                else dataMap.set(key, newMap.get(key));
-            }
-            // loop unique itemIDs
-            for (const key of setX) {
-                if (dataMap.has(key)) newMap.set(key, dataMap.get(key));
-                else dataMap.set(key, newMap.get(key));
-            }
-            // update database with updated values
-            for (const [key,val] of dataMap.entries()) {
-                if (!dataPrev.has(key)) {
-                    await InventoryManager.new_order_item(key, order.orderID, val);
+            let quantity = null, orderItem = null;
+            for (const [key, val] of newMap.entries()) { // update database
+                console.log(`item ${key}: updating database with quantity ${val}`);
+                if (dataSet.has(key)) { // database item exists, get item if quantity changed
+                    const orders = await InventoryManager.search_order_item({attr: 'orderID', value: orderID},{attr: 'itemID', value: key});
+                    orderItem = orders.at(0);
+                }
+                
+                if (!orderItem) { // create new database item with quantity otherwise
+                    console.log('creating order_item with orderID: %d, itemID: %d, and quantity: %d', orderID, key, val);
+                    orderItem = await InventoryManager.new_order_item(key, orderID, val);
                     continue;
                 }
-                if (dataPrev.get(key) == val) continue;
-                const temp = await InventoryManager.search_order_item({attr:'orderID', value:order.orderID}, {attr:'itemID', val:key});
-                temp[0].quantity = val;
-                await temp[0].save();
-            }
-            console.log('reupdating cart');
-            for (const [key, val] of newMap.entries()) {
-                if (!prevCart.has(key)) cartArr.push([key, val]);
+
+                orderItem.quantity = val;
+                if (orderItem.quantity < 1) orderItem.destroy();
+                else orderItem.quantity = val;
+
+                if (orderItem) orderItem.save();
+
             }
 
             return;
