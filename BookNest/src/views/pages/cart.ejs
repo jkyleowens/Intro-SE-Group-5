@@ -40,7 +40,9 @@
                                 const coverImage = './uploads/' + item.coverImage;
                         %>                    
                                 <td>
-                                    <img src="<%= coverImage %>" alt="<%= name %>" class="cover-img" style="width: 100px;">
+                                    <div class="cover-img-div">
+                                    <img src="<%= coverImage %>" alt="<%= name %>">
+                                    </div>
                                 </td>
                                 <td><%= isbn %></td>
                                 <td><%= name %></td>
