@@ -165,6 +165,8 @@ class AppManager
 
             // Middleware to parse form data
             app.use(express.urlencoded({ extended: true }));
+
+            APIRouter.MulterSetup(this.imgStore);
             
             app.use('/', ViewRouter.router);
             app.use('/api', APIRouter.router);

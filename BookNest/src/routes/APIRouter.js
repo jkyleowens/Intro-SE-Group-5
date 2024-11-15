@@ -27,10 +27,8 @@ class APIRouter
 
     MulterSetup(imgStore) // send imgStore from AppManager
     {
-        this.imgStore = imgStore;
-        // Configure Multer for file uploads
         const storage = multer.diskStorage({
-            destination: this.imgStore, // Save images here
+            destination: imgStore, // Save images here
 
             filename: (req, file, cb) => { // unique fileName
                 const isbn = req.body.isbn;
@@ -44,7 +42,7 @@ class APIRouter
         this.upload = multer({ storage: storage }); 
 
         // add new book upon post from client
-        router.post('/add-book', this.upload.fields([
+        this.router.post('/add-book', this.upload.fields([
             { name: 'coverImage', maxCount: 1 },
             { name: 'isbn', maxCount: 1 }
         ]), this.AddBook);
@@ -168,11 +166,11 @@ class APIRouter
             message: null
         };
         
-        const isbn = req.body.get('isbn');
-        const name = req.body.get('name');
-        const author = req.body.get('author');
-        const price = req.body.get('price');
-        const stock = req.body.get('stock');
+        const isbn = req.body.isbn;
+        const name = req.body.name;
+        const author = req.body.author;
+        const price = req.body.price;
+        const stock = req.body.stock;
         const coverImage = req.files.coverImage[0].filename;
 
         const action = `Adding new book: {${isbn} ${name} ${author} $${price} ${stock}}`;
