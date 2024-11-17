@@ -11,13 +11,32 @@ import UserManager from '../controllers/UserManager.js';
 
 const APIRouter = express.Router();
 
+// setup multer
+const storage = multer.diskStorage({
+    destination: '../../public/uploads/', // Save images here
+
+    filename: (req, file, cb) => { // unique fileName
+        const isbn = req.body.isbn;
+        const unique = Date.now() + '-' + isbn;
+        const ext = '.jpg';
+
+        cb(null, (unique + ext)); // Unique file name + extension
+    },
+});
+
+const upload = multer({ storage: storage }); 
+
 // api
 APIRouter.post('/register', Register);
 APIRouter.post('/login', Login);
-APIRouter.post('/add-cart', AddCart);
-APIRouter.post('/remove-cart', RemoveBook);
+APIRouter.post('/add-cart/:isbn', AddCart);
+APIRouter.post('/remove-cart/:isbn', RemoveBook);
 APIRouter.post('/process-checkout', Checkout);
-
+// add new book upon post from client
+APIRouter.post('/add-book', upload.fields([
+    { name: 'coverImage', maxCount: 1 },
+    { name: 'isbn', maxCount: 1 }
+]), AddBook);
 
 
 // middleware for login
@@ -139,7 +158,7 @@ async function RemoveBook (req, res) {
     }
 
     // remove book from cart
-    const bookId = req.body.itemID; // Get the book ID from the request
+    const bookId = req.params.isbn; // Get the book ID from the request
     const quantity = req.body.quantity * -1; // get quantity to remove (-)
 
     const user = req.session.client;
@@ -159,12 +178,12 @@ async function RemoveBook (req, res) {
 
         result.message = 'Successfully removed book from cart!';
         req.flash('messages', result.message);
-        return res.json(result);
+        return res.redirect('/cart');
     
     } catch (err) {
         result.message = 'There was an error removing book from cart: ' + err;
         req.flash('messages', result.message);
-        return res.json(result);
+        return res.redirect('/');
     }   
 }
 
@@ -176,8 +195,8 @@ async function AddCart (req, res) {
         message: null
     }
     // get bookID and quantity
-    const bookId = req.body.itemID;
-    const quantity = req.body.quantity;
+    const bookId = req.params.isbn;
+    const quantity = Number(req.body.quantity);
 
     try {
 
@@ -195,17 +214,46 @@ async function AddCart (req, res) {
         
         await UserManager.UpdateUserCart(user, req.session.client.cart.items, [[bookId, quantity]]);
         
-        
-        
         req.flash('messages', result.message);
-        return res.json(result);
+        return res.redirect('/catalog');
     
     } catch (err) {
         result.success = false;
         result.message = `Couldn't add item with ISBN ${bookId}: ` + err;
 
         req.flash('message', 'Error adding book to cart.');
-        return res.json(result);
+        return res.redirect('/catalog');
+    }
+}
+
+async function AddBook (req, res) {
+    const result = {
+        success: true,
+        message: null
+    };
+    
+    const isbn = req.body.isbn;
+    const name = req.body.name;
+    const author = req.body.author;
+    const price = req.body.price;
+    const stock = req.body.stock;
+    const coverImage = req.files.coverImage[0].filename;
+
+    const action = `Adding new book: {${isbn} ${name} ${author} $${price} ${stock}}`;
+
+    let book = null;
+    try {
+        book = await InventoryManager.new_item(isbn, name, author, price, stock, coverImage);
+        if (!book) throw `creating sequelize model instance returned null`;
+
+        result.message = `${action} was successful!`;
+        req.flash('messages', result.message);
+        return res.redirect('/');
+    } catch (err) {
+        result.success = false;
+        result.message = `Error ${action}! ` + err;
+        req.session.flash('messages', result.message);
+        return res.redirect('/');
     }
 }
 

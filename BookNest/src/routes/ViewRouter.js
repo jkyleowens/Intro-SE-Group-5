@@ -11,13 +11,13 @@ import UserManager from '../controllers/UserManager.js';
 const ViewRouter = express.Router();
 
 // views routes
-ViewRouter.get('/', ViewHome);
-ViewRouter.get('/home', ViewHome);
-ViewRouter.get('/login', ViewLogin);
-ViewRouter.get('/register', ViewRegister);
-ViewRouter.get('/catalog', ViewCatalog);
-ViewRouter.get('/cart', ViewCart);
-ViewRouter.get('/featured', ViewFeatured);
+ViewRouter.all('/', ViewHome);
+ViewRouter.all('/home', ViewHome);
+ViewRouter.all('/login', ViewLogin)
+ViewRouter.all('/register', ViewRegister);
+ViewRouter.all('/catalog', ViewCatalog);
+ViewRouter.all('/cart', ViewCart);
+ViewRouter.all('/featured', ViewFeatured);
 
 ViewRouter.get('/order/:id', ViewOrder);
 ViewRouter.get('/profile/:id', ViewProfile);

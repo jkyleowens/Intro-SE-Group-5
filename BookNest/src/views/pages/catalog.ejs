@@ -21,16 +21,13 @@
                 <div> <p> <%= isbn %> </p> <h3> <%= name %> </h3> </div>
                 <div> <h5> by <%= author %> </h5> </div>
                 <div> <p> Price: $<%= price %> </p></div>        
-                <form name="add-cart-form" method="POST">
-                    <input type="hidden" id="isbn" name="isbn" value="<%= isbn %>"/>
-                    <input type="number" id="quantity" name="quantity" value="1"/>
+                <form name="add-cart-form" method="POST" action="api/add-cart/<%= isbn %>">
+                    <input type="number" id="<%= isbn %>-quantity" name="quantity" value="1"/>
                     <button type="submit">Add to Cart</button>
                 </form>
                     
             </div>
-        <% }) %>
-
-        <script type="module" src="./javascript/add-book.js"></script>
+        <% }); %>
     </div>
 </body>
 </html>

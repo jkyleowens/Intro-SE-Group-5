@@ -3,6 +3,9 @@ import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash'
 import path from 'path';
+import dotenv from 'dotenv';
+import RedisStore from 'connect-redis';
+import Redis from 'ioredis';
 
 import init_item from '../models/item.js';
 import init_order_item from '../models/order_item.js';
@@ -121,13 +124,22 @@ class AppManager
 
             const app = express();
 
+            dotenv.config();
+
+            // redis session storage
+            const redisClient = new Redis(process.env.REDIS_URL);
+
             // init session
             app.use(session({
-                secret: 'your-secret-key', // Change this to a strong secret
+                store: new RedisStore({ client: redisClient }),
+                secret: process.env.SESSION_SECRET, // variable declared in .env (environment variable)
                 resave: false,
-                saveUninitialized: true,
-                cookie: { maxAge: 1000 * (60 * this.cookieExpires) } // cookie expires after an hour
-            }));
+                saveUninitialized: false,
+                cookie: { 
+                    secure: false,
+                    maxAge: 1000 * (60 * this.cookieExpires),
+                    httpOnly: true
+                }}));
 
             // new client object to store details and cart
             app.use((req, res, next) => {
@@ -146,7 +158,6 @@ class AppManager
             // ejs view engine
             app.set('view engine', 'ejs');
             
-
             // use json for middleware
             app.use(express.json());
 
@@ -158,9 +169,6 @@ class AppManager
                 res.locals.messages = req.flash('messages'); // or 'error', depending on your usage
                 next();
             });
-
-            // Middleware to parse form data
-            app.use(express.urlencoded({ extended: true }));
             
             this.app = app;
             return app;
@@ -177,4 +185,4 @@ class AppManager
 
 export default new AppManager;
 
-export {APIRouter, ViewRouter };
+export { APIRouter, ViewRouter };
