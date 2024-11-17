@@ -36,7 +36,7 @@ async function AddCart(event) {
         const result = await response.json();
         if (!result.success) console.error(result.message);
         
-        window.location.href = '/';
+        window.location.href = '/home';
 
     } catch (err) {
         console.error('adding to cart failed! ' + err);

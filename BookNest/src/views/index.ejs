@@ -17,10 +17,10 @@ header for the navigation bar and a div below that acts as a container for the o
     
     <!-- Navbar -->
     <nav class="navbar-top">
-        <button class="navbar-link" onclick="window.location.href='/'"><h1>BookNest</h1></button>
+        <button class="navbar-link" onclick="window.location.href='/home'"><h1>BookNest</h1></button>
         <div></div>
 
-        <button class="navbar-link" onclick="window.location.href='/'"><h3>Home</h3></button>
+        <button class="navbar-link" onclick="window.location.href='/catalog'"><h3>Catalog</h3></button>
 
 
         <button class="navbar-link" onclick="window.location.href='/cart'"><h3>My Cart</h3></button>
@@ -66,8 +66,8 @@ header for the navigation bar and a div below that acts as a container for the o
     <footer class="footer">
         <div>
             <p>&copy; 2024 BookNest. All rights reserved.</p>
-            <a href="/about">About Us</a> | 
-            <a href="/contact">Contact</a>
+            <button onclick="window.location.href = '/about'" class="option-button"><h3>About BookNest</h3></button>
+            <button onclick="window.location.href = '/contact'" class="option-button"><h3>Contact Us</h3></button>
         </div>
     </footer>
 </body>

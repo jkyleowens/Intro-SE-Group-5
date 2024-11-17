@@ -168,9 +168,6 @@ class AppManager
 
             APIRouter.MulterSetup(this.imgStore);
             
-            app.use('/', ViewRouter.router);
-            app.use('/api', APIRouter.router);
-            
             this.app = app;
             return app;
 
@@ -185,3 +182,5 @@ class AppManager
 
 
 export default new AppManager;
+
+export {APIRouter, ViewRouter };

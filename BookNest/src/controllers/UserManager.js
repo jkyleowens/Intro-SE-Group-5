@@ -1,5 +1,4 @@
 
-import AppManager from "../../app.js";
 import bcrypt from 'bcryptjs';
 import InventoryManager from "./InventoryManager.js";
 

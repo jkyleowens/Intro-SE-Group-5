@@ -8,6 +8,7 @@ body {
 }
 
 .container {
+  font-family:'Roboto', sans-serif;
   border: 1px solid black;
   max-width: 90%;
   min-height: 80vh;
@@ -21,19 +22,13 @@ body {
   justify-items:center;
 }
 
-h1 {
-  text-align: center;
-}
-
 h3,h4 {
   margin: 0;
 }
 
-
 form div {
   margin-bottom: 15px;
 }
-
 
 label {
   display: block;
@@ -102,12 +97,13 @@ button {
 }
 
 .listing-container {
+  font-family:'Roboto', sans-serif;
   margin: 5vw auto;
   width: 90%;
   min-height: 100vh;
   display:grid;
   grid-template-columns: repeat(5, 1fr);
-  /* grid-template-rows: repeat(5, 1fr); */
+  grid-template-rows: repeat(5, 1fr); 
   gap:2vh;
 
 }
@@ -204,10 +200,6 @@ button {
   align-content: center;
 }
 
-.book-form {
-
-}
-
 
 /* olivia */
 body {
@@ -260,10 +252,6 @@ h1 {
 }
 
 /* olivia */
-body {
-  background-color: white;
-  font-family: "Comic Sans MS", sans-serif;
-}
 
 h1 {
   color: black;

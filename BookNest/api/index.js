@@ -2,8 +2,8 @@
 import path from 'path';
 
 import { fileURLToPath } from 'url';
-import AppManager from './src/controllers/AppManager.js';
-import { APIRouter, ViewRouter } from './src/controllers/AppManager.js';
+import AppManager from '../src/controllers/AppManager.js';
+import { APIRouter, ViewRouter } from '../src/controllers/AppManager.js';
 
 const filename = fileURLToPath(import.meta.url);
 
@@ -12,7 +12,7 @@ const filename = fileURLToPath(import.meta.url);
 const port = 3000; 
 
 // project root dir
-const root = path.dirname(filename);
+const root = path.dirname(path.dirname(filename));
 let app;
 
 
@@ -37,7 +37,6 @@ try {
     onExit();
 }
 
-export default app;
 
 async function onExit()
 {
