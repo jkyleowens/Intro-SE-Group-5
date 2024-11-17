@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "mocha",
-    "start": "node app"
+    "start": "node app",
+    "build": "echo 'no build step required'"
   },
   "author": "",
   "license": "ISC",

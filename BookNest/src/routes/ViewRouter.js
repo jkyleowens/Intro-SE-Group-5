@@ -17,11 +17,13 @@ class ViewRouter
         const router = this.router;
 
         // views routes
+        router.get('/', this.ViewHome);
         router.get('/home', this.ViewHome);
         router.get('/login', this.ViewLogin);
         router.get('/register', this.ViewRegister);
         router.get('/catalog', this.ViewCatalog);
         router.get('/cart', this.ViewCart);
+        router.get('/featured', this.ViewFeatured);
 
         router.get('/order/:id', this.ViewOrder);
         router.get('/profile/:id', this.ViewProfile);
@@ -70,6 +72,13 @@ class ViewRouter
             objArr: objArr, // Ensure books is an array
         });
         
+    }
+
+    ViewFeatured = async (req, res) => {
+        res.render('index', {
+            title: 'Featured Books',
+            content: './pages/featured'
+        });
     }
 
     ViewLogin = async (req, res) => {

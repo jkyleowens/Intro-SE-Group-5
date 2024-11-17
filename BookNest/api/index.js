@@ -37,6 +37,8 @@ try {
     onExit();
 }
 
+export default app;
+
 
 async function onExit()
 {
