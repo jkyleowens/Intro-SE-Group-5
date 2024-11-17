@@ -110,7 +110,7 @@ class AppManager
     }
 
     // init controllers, app, server, and middleware
-    async InitApp(root)
+    async InitApp()
     {
         try {
 
@@ -121,10 +121,6 @@ class AppManager
 
             const app = express();
 
-            const pub = path.join(root, 'public'); // BookNest/public
-            // static files
-            app.use(express.static(pub));
-            this.imgStore = path.join(pub, 'uploads');
             // init session
             app.use(session({
                 secret: 'your-secret-key', // Change this to a strong secret
@@ -149,7 +145,7 @@ class AppManager
 
             // ejs view engine
             app.set('view engine', 'ejs');
-            app.set('views', path.join(root, 'src', 'views'));
+            
 
             // use json for middleware
             app.use(express.json());
@@ -165,8 +161,6 @@ class AppManager
 
             // Middleware to parse form data
             app.use(express.urlencoded({ extended: true }));
-
-            APIRouter.MulterSetup(this.imgStore);
             
             this.app = app;
             return app;

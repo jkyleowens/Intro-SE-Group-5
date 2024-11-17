@@ -22,7 +22,7 @@ body {
   justify-items:center;
 }
 
-h3,h4 {
+h1,h3,h4 {
   margin: 0;
 }
 
@@ -127,7 +127,7 @@ button {
   font-family:'Roboto', sans-serif;
   font-weight:700;
   padding:0;
-  height: 10%;
+  height: 5%;
   width: 100%;
   display: grid;
   grid-template-columns: 3fr repeat(4, 1fr);
@@ -319,9 +319,8 @@ h4 {
 }
 
 .slider {
-  width: 100vw;
-  max-width: 100vw;
-  height: 30vw;
+  width: 90%;
+  height: 40vh;
   margin: auto;
   position: relative;
   overflow: hidden;

@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "A simple but practical and scalable webapp for browsing your favorite books.",
   "type": "module",
+  "engines": {
+    "node": "22.*"
+  },
   "scripts": {
     "test": "mocha",
-    "start": "node app",
+    "start": "node api/index.js",
     "build": "echo 'no build step required'"
   },
-  "author": "",
+  "author": "CSE4214-group5",
   "license": "ISC",
   "dependencies": {
     "@vercel/node": "^3.2.24",
@@ -34,5 +37,16 @@
     "@types/express-session": "^1.18.0",
     "@types/multer": "^1.4.12",
     "connect-flash": "^0.1.1"
-  }
+  },
+  "main": "api/index.js",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [
+    "bookstore",
+    "library",
+    "ecommerce",
+    "retail",
+    "webapp"
+  ]
 }

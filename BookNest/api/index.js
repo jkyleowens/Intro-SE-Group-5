@@ -1,44 +1,53 @@
 // imports / exports
 import path from 'path';
-
+import multer from 'multer';
 import { fileURLToPath } from 'url';
+
+import APIRouter from '../src/routes/APIRouter.js';
+import ViewRouter from '../src/routes/ViewRouter.js';
+
 import AppManager from '../src/controllers/AppManager.js';
-import { APIRouter, ViewRouter } from '../src/controllers/AppManager.js';
 
-const filename = fileURLToPath(import.meta.url);
-
-
-// establish port
-const port = 3000; 
+const pathName = path.dirname(fileURLToPath(import.meta.url));
+const root = path.dirname(pathName);
 
 // project root dir
-const root = path.dirname(path.dirname(filename));
-let app;
+const imgStore = path.join(root, 'public', 'uploads');
 
+// connect to database
+await AppManager.InitSequelize(root);
 
+// init express and controllers 
+const app = await AppManager.InitApp(root);
+app.set('views', path.join(root, 'src', 'views'));
 
-try {
+// setup multer
+const storage = multer.diskStorage({
+    destination: imgStore, // Save images here
 
-    // connect to database
-    await AppManager.InitSequelize(root);
+    filename: (req, file, cb) => { // unique fileName
+        const isbn = req.body.isbn;
+        const unique = Date.now() + '-' + isbn;
+        const ext = '.jpg';
 
-    // init express and controllers 
-    app = await AppManager.InitApp(root); 
+        cb(null, (unique + ext)); // Unique file name + extension
+    },
+});
 
-    app.use('/', ViewRouter.router);
-    app.use('/api', APIRouter.router);
+const upload = multer({ storage: storage }); 
 
-    AppManager.server = app.listen(port, () => {
-        console.log('server started on port %d', port);
-    });
+app.use('/api', APIRouter);
+app.use('/', ViewRouter);
 
-} catch (err) {
-    console.log(err);
-    onExit();
-}
+// add new book upon post from client
+APIRouter.post('/add-book', upload.fields([
+    { name: 'coverImage', maxCount: 1 },
+    { name: 'isbn', maxCount: 1 }
+]), AddBook);
 
-export default app;
-
+export default (req, res) => {
+    app(req, res);
+};
 
 async function onExit()
 {
@@ -66,5 +75,34 @@ async function onExit()
 process.on('SIGINT', onExit);
 process.on('SIGTERM', onExit);
 
+async function AddBook (req, res) {
+    const result = {
+        success: true,
+        message: null
+    };
+    
+    const isbn = req.body.isbn;
+    const name = req.body.name;
+    const author = req.body.author;
+    const price = req.body.price;
+    const stock = req.body.stock;
+    const coverImage = req.files.coverImage[0].filename;
 
+    const action = `Adding new book: {${isbn} ${name} ${author} $${price} ${stock}}`;
+
+    let book = null;
+    try {
+        book = await InventoryManager.new_item(isbn, name, author, price, stock, coverImage);
+        if (!book) throw `creating sequelize model instance returned null`;
+
+        result.message = `${action} was successful!`;
+        req.flash('messages', result.message);
+        return res.json(result);
+    } catch (err) {
+        result.success = false;
+        result.message = `Error ${action}! ` + err;
+        req.session.flash('messages', result.message);
+        return res.json(result);
+    }
+}
 
