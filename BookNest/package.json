@@ -2,15 +2,15 @@
   "name": "booknest",
   "version": "1.0.0",
   "description": "A simple but practical and scalable webapp for browsing your favorite books.",
-  "main": "app.js",
+  "type": "module",
   "scripts": {
     "test": "mocha",
-    "start": "nodemon app"
+    "start": "node app"
   },
   "author": "",
-  "type": "module",
   "license": "ISC",
   "dependencies": {
+    "@vercel/node": "^3.2.24",
     "bcryptjs": "^2.4.3",
     "daemon": "^1.1.0",
     "ejs": "^3.1.10",
@@ -22,7 +22,8 @@
     "request": "^2.88.2",
     "sequelize": "^6.37.5",
     "sequelize-cli": "^6.6.2",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "typescript": "^5.6.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

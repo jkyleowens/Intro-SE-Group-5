@@ -9,7 +9,7 @@ import UserManager from '../controllers/UserManager.js';
 // initializes and handles routes
 class ViewRouter
 {
-
+    router = null;
     constructor()
     {
         this.router = express.Router();
@@ -17,7 +17,7 @@ class ViewRouter
         const router = this.router;
 
         // views routes
-        router.get('/', this.ViewHome);
+        router.get('/home', this.ViewHome);
         router.get('/login', this.ViewLogin);
         router.get('/register', this.ViewRegister);
         router.get('/catalog', this.ViewCatalog);
@@ -31,6 +31,13 @@ class ViewRouter
     }
 
     ViewHome = async (req, res) => {
+        res.render('index', {
+            title: 'BookNest - Home',
+            content: './pages/home'
+        });
+    }
+
+    ViewCatalog = async (req, res) => {
         let books = null, objArr = [];
         try {
             books = await InventoryManager.search_item(null, null); // get all featured books
@@ -39,8 +46,6 @@ class ViewRouter
                 const temp = [books]; // convert single item array
                 books = temp;
             }
-            // Log the books array
-            console.log('Books:'); 
 
             // loop through all items
             books.forEach((book, i) => {
@@ -60,8 +65,8 @@ class ViewRouter
             throw err;
         }
         res.render('index', {
-            title: 'Home',
-            content: './pages/home', // Path to the content EJS file
+            title: 'Catalog',
+            content: './pages/catalog', // Path to the content EJS file
             objArr: objArr, // Ensure books is an array
         });
         
@@ -103,13 +108,6 @@ class ViewRouter
             title: 'Cart',
             content: './pages/cart',
             cart: items
-        });
-    }
-
-    ViewCatalog = async (req, res) => {
-        res.render('index', {
-            title: 'Book Catalog',
-            content: './pages/catalog'
         });
     }
 
