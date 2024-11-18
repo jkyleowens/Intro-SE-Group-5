@@ -10,7 +10,7 @@ export default async (sequelize) => {
         'user',
         {
             userID: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.UUIDV4,
                 allowNull: false,
                 primaryKey: true,
                 autoIncrement: true,

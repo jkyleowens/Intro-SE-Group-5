@@ -9,14 +9,14 @@ export default async (sequelize) => {
         'item',
         {
             itemID: { // ISBN
-                type: DataTypes.INTEGER,
+                type: DataTypes.UUIDV4,
                 primaryKey: true,
                 autoIncrement: true,
                 unique: true,
                 allowNull: false
             },
             price: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.FLOAT
             },
             name: {
                 type: DataTypes.STRING

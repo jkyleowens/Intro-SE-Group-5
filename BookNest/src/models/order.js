@@ -9,14 +9,14 @@ export default async (sequelize) => {
     'order', 
     {
         orderID: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUIDV4,
             primaryKey: true,
             autoIncrement: true,
             unique: true,
             allowNull: false
         },
         total: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.FLOAT,
         },
         shipping: {
             type: DataTypes.STRING
