@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "A simple but practical and scalable webapp for browsing your favorite books.",
   "type": "module",
-  "main": "./api/index.js",
-  "engines": {
-    "node": "22.*"
-  },
+  "main": "api/index.js",
   "scripts": {
     "test": "mocha",
     "start": "node api/index.js",
