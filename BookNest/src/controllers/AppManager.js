@@ -1,5 +1,4 @@
 import { Sequelize } from 'sequelize';
-import pg from 'pg';
 import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash'
