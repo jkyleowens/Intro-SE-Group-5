@@ -1,9 +1,9 @@
 import { Sequelize } from 'sequelize';
+import { SqliteDialect } from '@sequelize/sqlite3';
 import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash'
 import path from 'path';
-import dotenv from 'dotenv';
 import RedisStore from 'connect-redis';
 import Redis from 'ioredis';
 
@@ -50,10 +50,20 @@ class AppManager
     async InitSequelize(root)
     {
 
-        let sequelize = new Sequelize('database', 'booknest', null, {
-            host: 'localhost',
-            dialect: "sqlite",
-            storage: path.join(root, 'src', 'database.db')
+        let sequelize = new Sequelize({
+            host: process.env.POSTGRES_HOST,
+            dialect: 'postgres',
+            user: process.env.POSTGRES_USER,
+            password: process.env.POSTGRES_PASSWORD,
+            database: process.env.POSTGRES_DATABASE,
+            port: process.env.port || 5432,
+            logging: false,
+            dialectOptions: {
+                ssl: {
+                    require: true,
+                    rejectUnauthorized: false
+                }
+            }
         });
     
         try {
@@ -101,12 +111,6 @@ class AppManager
         try {
             if (this.#sequelize != null) await this.#sequelize.close();
 
-            if (!this.server) throw 'server not initialized';
-
-            await this.server.close(() => {
-                console.log('express server closed.');
-            });
-
         } catch (err) {
             throw new Error(this.failure('closing AppManager', err));
         }
@@ -123,8 +127,6 @@ class AppManager
             await UserManager.UpdateModels(this.#sequelize);
 
             const app = express();
-
-            dotenv.config();
 
             // redis session storage
             const redisClient = new Redis(process.env.REDIS_URL);
