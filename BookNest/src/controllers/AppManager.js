@@ -49,13 +49,10 @@ class AppManager
     async InitSequelize(root)
     {
 
-        let sequelize = new Sequelize({
+        let sequelize = new Sequelize(process.env.POSTGRES_DB, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
             host: process.env.POSTGRES_HOST,
             dialect: 'postgres',
-            user: process.env.POSTGRES_USER,
-            password: process.env.POSTGRES_PASSWORD,
-            database: process.env.POSTGRES_DATABASE,
-            port: process.env.port || 5432,
+            port: process.env.POSTGRES_PORT || 5432,
             logging: false,
             dialectOptions: {
                 ssl: {
