@@ -5,6 +5,7 @@ import flash from 'connect-flash'
 import path from 'path';
 import RedisStore from 'connect-redis';
 import Redis from 'ioredis';
+import pg from 'pg';
 
 import init_item from '../models/item.js';
 import init_order_item from '../models/order_item.js';
@@ -52,6 +53,7 @@ class AppManager
         let sequelize = new Sequelize(process.env.POSTGRES_DATABASE, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
             host: process.env.POSTGRES_HOST,
             dialect: 'postgres',
+            dialectModule: pg,
             port: process.env.POSTGRES_PORT || 5432,
             logging: false,
             dialectOptions: {
