@@ -3,22 +3,32 @@
   "version": "1.0.0",
   "description": "A simple but practical and scalable webapp for browsing your favorite books.",
   "type": "module",
+  "main": "./api/index.js",
+  "engines": {
+    "node": "22.*"
+  },
   "scripts": {
     "test": "mocha",
-    "start": "node app"
+    "start": "node api/index.js",
+    "build": "echo 'no build step required'"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@vercel/node": "^3.2.24",
     "bcryptjs": "^2.4.3",
+    "connect-redis": "^7.1.1",
     "daemon": "^1.1.0",
+    "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.1",
     "express-session": "^1.18.1",
+    "ioredis": "^5.4.1",
     "jest": "^29.7.0",
+    "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.7",
+    "redis": "^4.7.0",
     "request": "^2.88.2",
     "sequelize": "^6.37.5",
     "sequelize-cli": "^6.6.2",

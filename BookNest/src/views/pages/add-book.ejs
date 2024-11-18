@@ -14,7 +14,7 @@
         </header>
         
         <main>
-            <form class="text-form" method="post" id="book-form" enctype="multipart/form-data">
+            <form class="text-form" method="post" id="book-form" action="/api/add-book" enctype="multipart/form-data">
                 <label for="isbn">ISBN:</label>
                 <input type="text" id="isbn" name="isbn" required>
 
@@ -24,10 +24,8 @@
                 <label for="author">Author:</label>
                 <input type="text" id="author" name="author" required>
 
-
                 <label for="price">Price:</label>
                 <input type="number" id="price" name="price" required step="0.01">
-
 
                 <label for="stock">Stock:</label>
                 <input type="number" id="stock" name="stock" required step="1">
@@ -53,6 +51,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script type="module" src="./javascript/add-book.js"></script>
 </body>
 </html>

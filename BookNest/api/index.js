@@ -1,42 +1,35 @@
 // imports / exports
 import path from 'path';
-
+import multer from 'multer';
 import { fileURLToPath } from 'url';
+
 import AppManager from '../src/controllers/AppManager.js';
-import { APIRouter, ViewRouter } from '../src/controllers/AppManager.js';
 
-const filename = fileURLToPath(import.meta.url);
-
-
-// establish port
-const port = 3000; 
+const pathName = path.dirname(fileURLToPath(import.meta.url));
+const root = path.dirname(pathName);
 
 // project root dir
-const root = path.dirname(path.dirname(filename));
-let app;
+const imgStore = path.join(root, 'public', 'uploads');
+export { imgStore };
+
+// connect to database
+await AppManager.InitSequelize(root);
+
+// init express and controllers 
+const app = await AppManager.InitApp();
+app.set('views', path.join(root, 'src', 'views'));
+
+import APIRouter from '../src/routes/APIRouter.js';
+import ViewRouter from '../src/routes/ViewRouter.js';
+
+app.use('/api', APIRouter);
+app.use('/', ViewRouter);
 
 
 
-try {
-
-    // connect to database
-    await AppManager.InitSequelize(root);
-
-    // init express and controllers 
-    app = await AppManager.InitApp(root); 
-
-    app.use('/', ViewRouter.router);
-    app.use('/api', APIRouter.router);
-
-    AppManager.server = app.listen(port, () => {
-        console.log('server started on port %d', port);
-    });
-
-} catch (err) {
-    console.log(err);
-    onExit();
-}
-
+export default (req, res) => {
+    app(req, res);
+};
 
 async function onExit()
 {
