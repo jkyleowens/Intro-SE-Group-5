@@ -2,6 +2,8 @@ import express from 'express';
 import path from 'path';
 import flash from 'connect-flash';
 import multer from 'multer';
+import aws from 'aws-sdk';
+import multerS3 from 'multer-s3';
 
 import InventoryManager from '../controllers/InventoryManager.js';
 import UserManager from '../controllers/UserManager.js';
@@ -11,20 +13,33 @@ import UserManager from '../controllers/UserManager.js';
 
 const APIRouter = express.Router();
 
-// setup multer
-const storage = multer.diskStorage({
-    destination: '../../public/uploads/', // Save images here
-
-    filename: (req, file, cb) => { // unique fileName
-        const isbn = req.body.isbn;
-        const unique = Date.now() + '-' + isbn;
-        const ext = '.jpg';
-
-        cb(null, (unique + ext)); // Unique file name + extension
-    },
+aws.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
 });
 
-const upload = multer({ storage: storage }); 
+  // Create an S3 instance
+const s3 = new aws.S3();
+
+// setup multer
+
+const upload = multer({ 
+    storage: multerS3({
+        s3: s3,
+        bucket: process.env.AWS_BUCKET_NAME,
+        acl: 'public/read',
+        metadata: (req, file, cb) => {
+            cb(null, { fieldName: file.fieldname })
+        },
+        key: (req, file, cb) => {
+            const ext = path.extname(file.originalname);
+            const unique = `${Date.now()}-${req.body.isbn}`;
+            const fileName = unique + ext;
+            cb(null, fileName);
+        }
+    }) 
+}); 
 
 // api
 APIRouter.post('/register', Register);
