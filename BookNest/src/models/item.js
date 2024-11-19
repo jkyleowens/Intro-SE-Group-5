@@ -9,7 +9,7 @@ export default async (sequelize) => {
         'item',
         {
             itemID: { // ISBN
-                type: DataTypes.UUIDV1,
+                type: DataTypes.UUID,
                 primaryKey: true,
                 autoIncrement: true,
                 unique: true,
