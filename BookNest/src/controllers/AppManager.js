@@ -50,19 +50,24 @@ class AppManager
     async InitSequelize(root)
     {
 
-        let sequelize = new Sequelize(process.env.POSTGRES_DATABASE, process.env.POSTGRES_USER, process.env.POSTGRES_PASSWORD, {
-            host: process.env.POSTGRES_HOST,
-            dialect: 'postgres',
-            dialectModule: pg,
-            port: process.env.POSTGRES_PORT || 5432,
-            logging: false,
-            dialectOptions: {
-                ssl: {
-                    require: true,
-                    rejectUnauthorized: false
+        let sequelize = new Sequelize(
+            process.env.POSTGRES_DATABASE, 
+            process.env.POSTGRES_USER, 
+            process.env.POSTGRES_PASSWORD, 
+            {
+                host: process.env.POSTGRES_HOST,
+                dialect: 'postgres',
+                dialectModule: pg,
+                port: process.env.POSTGRES_PORT || 5432,
+                logging: false,
+                dialectOptions: {
+                    ssl: {
+                        require: true,
+                        rejectUnauthorized: false
+                    }
                 }
             }
-        });
+        );
     
         try {
             await sequelize.authenticate(); // check database connection
