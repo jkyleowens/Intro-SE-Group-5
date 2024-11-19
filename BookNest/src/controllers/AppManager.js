@@ -55,7 +55,7 @@ class AppManager
             process.env.POSTGRES_USER, 
             process.env.POSTGRES_PASSWORD, 
             {
-                host: process.env.POSTGRES_HOST,
+                host: process.env.SUPABASE_HOST,
                 dialect: 'postgres',
                 dialectModule: pg,
                 port: process.env.POSTGRES_PORT || 5432,
