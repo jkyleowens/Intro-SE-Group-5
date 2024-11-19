@@ -52,13 +52,13 @@ class AppManager
 
         let sequelize = new Sequelize(
             process.env.POSTGRES_DATABASE, 
-            process.env.POSTGRES_USER, 
-            process.env.POSTGRES_PASSWORD, 
+            process.env.SUPABASE_USER, 
+            process.env.SUPABASE_PASSWORD, 
             {
                 host: process.env.SUPABASE_HOST,
                 dialect: 'postgres',
                 dialectModule: pg,
-                port: process.env.POSTGRES_PORT || 5432,
+                port: 6543,
                 logging: false,
                 dialectOptions: {
                     ssl: {
