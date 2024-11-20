@@ -16,7 +16,7 @@ export default async (sequelize) => {
                 allowNull: false
             },
             price: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.FLOAT
             },
             name: {
                 type: DataTypes.STRING
@@ -28,7 +28,7 @@ export default async (sequelize) => {
                 type: DataTypes.STRING
             },
             stock: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.INTEGER
             },
             coverImage: {
                 type: DataTypes.STRING
