@@ -2,8 +2,6 @@ import express from 'express';
 import path from 'path';
 import flash from 'connect-flash';
 import multer from 'multer';
-import aws from 'aws-sdk';
-import multerS3 from 'multer-s3';
 
 import InventoryManager from '../controllers/InventoryManager.js';
 import UserManager from '../controllers/UserManager.js';
@@ -13,49 +11,41 @@ import UserManager from '../controllers/UserManager.js';
 
 const APIRouter = express.Router();
 
-aws.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-});
+export function SetupMulter(imgStore) {
+    // project root dir
+    const storage = multer.diskStorage({
+        destination: imgStore, // Save images here
 
-  // Create an S3 instance
-const s3 = new aws.S3();
+        filename: (req, file, cb) => { // unique fileName
+            const isbn = req.body.isbn;
+            const unique = Date.now() + '-' + isbn;
+            const ext = '.jpg';
 
-// setup multer
-
-const upload = multer({ 
-    storage: multerS3({
-        s3: s3,
-        bucket: process.env.S3_BUCKET_NAME,
-        acl: 'public-read-write',
-        metadata: (req, file, cb) => {
-            cb(null, { fieldName: file.fieldname })
+            cb(null, (unique + ext)); // Unique file name + extension
         },
-        key: (req, file, cb) => {
-            const ext = path.extname(file.originalname);
-            const unique = `${Date.now()}-${req.body.isbn}`;
-            const fileName = unique + ext;
-            cb(null, fileName);
-        }
-    }) 
-}); 
+    });
+    const upload = multer({ storage: storage }); 
+    APIRouter.post('/add-book', upload.fields([
+        { name: 'coverImage', maxCount: 1 },
+        { name: 'isbn', maxCount: 1 }
+    ]), AddBook);
+}
+
+
+
 
 // api
 APIRouter.post('/register', Register);
 APIRouter.post('/login', Login);
-APIRouter.post('/add-cart/:isbn', AddCart);
-APIRouter.post('/remove-cart/:isbn', RemoveBook);
+APIRouter.post('/add-cart', AddCart);
+APIRouter.post('/remove-cart', RemoveBook);
 APIRouter.post('/process-checkout', Checkout);
 // add new book upon post from client
-APIRouter.post('/add-book', upload.fields([
-    { name: 'coverImage', maxCount: 1 },
-    { name: 'isbn', maxCount: 1 }
-]), AddBook);
+
 
 
 // middleware for login
-async function Login (req, res) {   
+export async function Login (req, res) {   
     // parse json string for details
     const email = req.body.email;
     const password = req.body.password;
@@ -89,9 +79,9 @@ async function Login (req, res) {
 }
 
 // middleware called upon /api/register posted by client
-async function Register (req, res) {
+export async function Register (req, res) {
 
-    const username = req.body.name;
+    const username = req.body.username;
     const email = req.body.email;
     const password = req.body.password;
 
@@ -119,7 +109,7 @@ async function Register (req, res) {
     
 }
 
-async function Checkout (req, res) {
+export async function Checkout (req, res) {
     const { name, address, city, zip } = req.body; // get order details
 
     let act, order;
@@ -166,52 +156,47 @@ async function Checkout (req, res) {
         
 }
 
-async function RemoveBook (req, res) {
+export async function RemoveBook (req, res) {
     const result = {
         success: true,
         message: null
     }
 
     // remove book from cart
-    const bookId = req.params.isbn; // Get the book ID from the request
-    const quantity = req.body.quantity * -1; // get quantity to remove (-)
+    const bookId = req.body.isbn; // Get the book ID from the request
+    const quantity = req.body.quantity; // get quantity to remove
+
+    console.log(`removing ${quantity} of item ${bookId}`);
 
     const user = req.session.client;
-    const cartArr = req.session.client.cart.items;
 
     try { // Logic to remove the book from the cart
-        
-        // convert cart arr to map
-        const cartMap = new Map(cartArr);
-        const newNum = cartMap.get(bookId) - quantity;
-        
-        console.log(`removing ${quantity} items from cart. the new quantity should be ${newNum}`);
 
         //update cart
         await UserManager.UpdateUserCart(user, req.session.client.cart.items, [[bookId, quantity]]);
 
-
         result.message = 'Successfully removed book from cart!';
         req.flash('messages', result.message);
-        return res.redirect('/cart');
+        return res.json(result);
     
     } catch (err) {
         result.message = 'There was an error removing book from cart: ' + err;
+        result.success = false;
         req.flash('messages', result.message);
-        return res.redirect('/');
+        return res.json(result);
     }   
 }
 
 //middleware for adding items to cart
-async function AddCart (req, res) {
+export async function AddCart (req, res) {
 
     const result = {
         success: true,
         message: null
     }
     // get bookID and quantity
-    const bookId = req.params.isbn;
-    const quantity = Number(req.body.quantity);
+    const bookId = req.body.isbn;
+    const quantity = req.body.quantity;
 
     try {
 
@@ -230,18 +215,18 @@ async function AddCart (req, res) {
         await UserManager.UpdateUserCart(user, req.session.client.cart.items, [[bookId, quantity]]);
         
         req.flash('messages', result.message);
-        return res.redirect('/catalog');
+        return res.json(result);
     
     } catch (err) {
         result.success = false;
         result.message = `Couldn't add item with ISBN ${bookId}: ` + err;
 
         req.flash('message', 'Error adding book to cart.');
-        return res.redirect('/catalog');
+        return res.json(result);
     }
 }
 
-async function AddBook (req, res) {
+export async function AddBook (req, res) {
     const result = {
         success: true,
         message: null

@@ -3,9 +3,6 @@ import express from 'express';
 import session from 'express-session';
 import flash from 'connect-flash'
 import path from 'path';
-import RedisStore from 'connect-redis';
-import Redis from 'ioredis';
-import pg from 'pg';
 
 import init_item from '../models/item.js';
 import init_order_item from '../models/order_item.js';
@@ -50,24 +47,11 @@ class AppManager
     async InitSequelize(root)
     {
 
-        let sequelize = new Sequelize(
-            process.env.POSTGRES_DATABASE, 
-            process.env.POSTGRES_USER, 
-            process.env.POSTGRES_PASSWORD, 
-            {
-                host: process.env.POSTGRES_HOST,
-                dialect: 'postgres',
-                dialectModule: pg,
-                port: 6543,
-                logging: false,
-                dialectOptions: {
-                    ssl: {
-                        require: true,
-                        rejectUnauthorized: false
-                    }
-                }
-            }
-        );
+        let sequelize = new Sequelize('database', 'booknest', null, {
+            host: 'localhost',
+            dialect: "sqlite",
+            storage: path.join(root, 'src', 'database.db')
+        });
     
         try {
             await sequelize.authenticate(); // check database connection
@@ -114,13 +98,19 @@ class AppManager
         try {
             if (this.#sequelize != null) await this.#sequelize.close();
 
+            if (!this.server) throw 'server not initialized';
+
+            await this.server.close(() => {
+                console.log('express server closed.');
+            });
+
         } catch (err) {
             throw new Error(this.failure('closing AppManager', err));
         }
     }
 
     // init controllers, app, server, and middleware
-    async InitApp()
+    async InitApp(root)
     {
         try {
 
@@ -131,20 +121,16 @@ class AppManager
 
             const app = express();
 
-            // redis session storage
-            const redisClient = new Redis(process.env.REDIS_URL);
-
+            const pub = path.join(root, 'public'); // BookNest/public
+            // static files
+            app.use(express.static(pub));
             // init session
             app.use(session({
-                store: new RedisStore({ client: redisClient }),
-                secret: process.env.SESSION_SECRET, // variable declared in .env (environment variable)
+                secret: 'your-secret-key', // Change this to a strong secret
                 resave: false,
-                saveUninitialized: false,
-                cookie: { 
-                    secure: false,
-                    maxAge: 1000 * (60 * this.cookieExpires),
-                    httpOnly: true
-                }}));
+                saveUninitialized: true,
+                cookie: { maxAge: 1000 * (60 * this.cookieExpires) } // cookie expires after an hour
+            }));
 
             // new client object to store details and cart
             app.use((req, res, next) => {
@@ -162,7 +148,8 @@ class AppManager
 
             // ejs view engine
             app.set('view engine', 'ejs');
-            
+            app.set('views', path.join(root, 'src', 'views'));
+
             // use json for middleware
             app.use(express.json());
 
@@ -174,8 +161,16 @@ class AppManager
                 res.locals.messages = req.flash('messages'); // or 'error', depending on your usage
                 next();
             });
+
+            app.set('views', path.join(root, 'src', 'views'));
+            app.use('/api', APIRouter);
+            app.use('/', ViewRouter);
+
+            // Middleware to parse form data
+            app.use(express.urlencoded({ extended: true }));
             
             this.app = app;
+            
             return app;
 
         } catch (err) {
@@ -190,4 +185,4 @@ class AppManager
 
 export default new AppManager;
 
-export { APIRouter, ViewRouter };
+export {APIRouter, ViewRouter };

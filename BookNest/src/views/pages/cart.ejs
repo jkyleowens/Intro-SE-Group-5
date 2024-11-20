@@ -50,7 +50,8 @@
                                 <td><%= quantity %></td>
                                 <td>$<%= total %></td>
                                 <td>
-                                    <form name="remove-cart" method="POST" action="/api/remove-cart/<%= isbn %>">
+                                    <form name="remove-cart" method="POST">
+                                        <input type="hidden" name="isbn" value="<%= isbn %>"/>
                                         <input type="number" name="quantity" min="0" value="0"/>
                                         <button type="submit" class="option-button">Remove</button>
                                     </form>
@@ -65,6 +66,7 @@
     </div>
 
     <!-- Bootstrap JS and dependencies (optional) -->
+    <script type="module" src="./javascript/remove-cart.js"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>

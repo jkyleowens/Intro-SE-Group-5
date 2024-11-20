@@ -170,7 +170,7 @@ class UserManager
             }
                 
             // cart items being changed
-            for (const key of setX) newMap.set(key, (newMap.get(key), (addMap.get(key) + newMap.get(key))));
+            for (const key of setX) newMap.set(key, (addMap.get(key) + newMap.get(key)));
 
             for (const key of setY) newMap.set(key, (addMap.get(key)));
             

@@ -5,8 +5,8 @@ const emailFormat = /^[a-zA-Z0-9(%-.)?]@[a-zA-Z0-9]+\.[a-zA-Z]+([.][a-zA-Z])?$/;
 // content loaded, setup event listeneres
 document.addEventListener('DOMContentLoaded', (event) => {
 
-    const register_form = document.getElementById('register-form');
-    register_form.addEventListener('submit', SendRegister);
+    const forms = document.getElementsByName('register-form');
+    forms.forEach(form => form.addEventListener('submit', SendRegister));
 });
 
 
@@ -29,7 +29,7 @@ async function SendRegister (event)
         if ( !username || !email || !password ) throw 'form must be completely filled'; // field empty
         if (emailFormat.test(email)) throw 'the email you entered is not in a valid format'; // invalid email format
 
-        const toSend = JSON.stringify({ name: username, email: email, password: password });
+        const toSend = JSON.stringify({ username: username, email: email, password: password });
 
         // post ---> /api/register ---> UserRouter.RegisterUser
         const response = await fetch('/api/register', {

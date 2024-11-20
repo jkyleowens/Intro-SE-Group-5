@@ -9,7 +9,7 @@ export default async (sequelize) => {
         'item',
         {
             itemID: { // ISBN
-                type: DataTypes.BIGINT,
+                type: DataTypes.INTEGER,
                 primaryKey: true,
                 autoIncrement: true,
                 unique: true,
@@ -28,7 +28,7 @@ export default async (sequelize) => {
                 type: DataTypes.STRING
             },
             stock: {
-                type: DataTypes.INTEGER,
+                type: DataTypes.INTEGER
             },
             coverImage: {
                 type: DataTypes.STRING

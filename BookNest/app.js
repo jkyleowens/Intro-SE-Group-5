@@ -2,34 +2,32 @@
 import path from 'path';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import { engine } from 'express-handlebars';
 
-import AppManager from '../src/controllers/AppManager.js';
+import AppManager from './src/controllers/AppManager.js';
+import { SetupMulter } from './src/routes/APIRouter.js';
 
-const pathName = path.dirname(fileURLToPath(import.meta.url));
+const pathName = fileURLToPath(import.meta.url);
 const root = path.dirname(pathName);
-
-// project root dir
-const imgStore = path.join(root, 'public', 'uploads');
-export { imgStore };
 
 // connect to database
 await AppManager.InitSequelize(root);
 
 // init express and controllers 
-const app = await AppManager.InitApp();
-app.set('views', path.join(root, 'src', 'views'));
+const app = await AppManager.InitApp(root);
 
-import APIRouter from '../src/routes/APIRouter.js';
-import ViewRouter from '../src/routes/ViewRouter.js';
+SetupMulter(path.join(root, 'public', 'uploads'));
 
-app.use('/api', APIRouter);
-app.use('/', ViewRouter);
+app.engine( 'handlebars', engine({
+    defaultLayout: 'main'
+    }));
 
+const server = app.listen(3000, () => {
+    AppManager.server = server;
+    console.log('express app listening on port 3000');
+});
 
-
-export default (req, res) => {
-    app(req, res);
-};
+export default app;
 
 async function onExit()
 {

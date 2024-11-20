@@ -37,14 +37,15 @@ async function ViewCatalog (req, res) {
     let books = null, objArr = [];
     try {
         books = await InventoryManager.search_item(null, null); // get all featured books
-        if (!Array.isArray(books)) {
+        if (!books) books = [];
+        else if (!Array.isArray(books)) {
 
             const temp = [books]; // convert single item array
             books = temp;
         }
 
         // loop through all items
-        books.forEach((book, i) => {
+        books.forEach((book) => {
             // store item details
             const obj = { 
                 isbn: book.itemID,
@@ -55,7 +56,7 @@ async function ViewCatalog (req, res) {
             };
         
             // populate array for ejs
-            objArr[i] = obj;
+            objArr.push(obj);
         });
     } catch (err) {
         throw err;

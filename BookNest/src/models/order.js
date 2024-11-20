@@ -9,7 +9,7 @@ export default async (sequelize) => {
     'order', 
     {
         orderID: {
-            type: DataTypes.BIGINT,
+            type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
             unique: true,
