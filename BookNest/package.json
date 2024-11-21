@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "A simple but practical and scalable webapp for browsing your favorite books.",
   "type": "module",
-  "main": "api/index.js",
+  "main": "app.js",
   "scripts": {
     "test": "jest",
-    "start": "node api/index.js",
+    "start": "node app",
     "build": "echo 'no build step required'"
   },
   "author": "",
