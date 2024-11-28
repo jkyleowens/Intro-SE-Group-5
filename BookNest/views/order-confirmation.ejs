@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .order-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .order-details {
+            margin-top: 20px;
+        }
+        .order-table img {
+            width: 100px;
+            height: auto;
+        }
+        .order-table th, .order-table td {
+            text-align: center;
+        }
+        .order-table td {
+            vertical-align: middle;
+        }
+        .total-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            padding-bottom: 20px;
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <header class="text-center mb-4">
+            <h1 class="display-4">Order Confirmation</h1>
+            <p class="lead">Thank you for shopping with BookNest! Your order has been successfully processed.</p>
+        </header>
+
+        <main>
+            <div class="order-summary">
+                <h4>Order Details</h4>
+                <hr>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><strong>Customer Information</strong></h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Name:</strong> <%= order.customerName %></li>
+                            <li><strong>Address:</strong> <%= order.address %></li>
+                            <li><strong>City:</strong> <%= order.city %></li>
+                            <li><strong>Zip Code:</strong> <%= order.zip %></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><strong>Payment Information</strong></h5>
+                        <ul class="list-unstyled">
+                            <li><strong>Card Number:</strong> **** **** **** <%= order.cardNumber.slice(-4) %></li>
+                            <li><strong>Expiration Date:</strong> <%= order.expiration %></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="order-details">
+                    <h5>Your Order:</h5>
+                    <table class="table table-bordered order-table">
+                        <thead class="thead-light">
+                            <tr>
+                                <th scope="col">Cover</th>
+                                <th scope="col">Book Name</th>
+                                <th scope="col">Author</th>
+                                <th scope="col">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% order.items.forEach(book => { %>
+                                <tr>
+                                    <td>
+                                        <img src="<%= book.coverImage %>" alt="<%= book.name %>" class="img-thumbnail">
+                                    </td>
+                                    <td><%= book.name %></td>
+                                    <td><%= book.author %></td>
+                                    <td>$<%= book.price.toFixed(2) %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                    <div class="text-right">
+                        <p class="total-price">Total: $<%= order.totalPrice.toFixed(2) %></p>
+                    </div>
+                </div>
+
+                <hr>
+                <div class="text-center">
+                    <a href="/catalog" class="btn btn-primary btn-lg">Back to Home</a>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer text-center">
+            <p>&copy; 2024 BookNest. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
