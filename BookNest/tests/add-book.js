@@ -42,7 +42,8 @@ describe('POST /add-book', () => {
       .post('/add-book')
       .field('name', 'Test Book')
       .field('author', 'Test Author')
-      .field('price', 19.99);
+      .field('price', 19.99)
+      // .attach('coverImage', path.join(__dirname, 'test-asset.jpg'));
     expect(res.status).toBe(200);
   });
 });

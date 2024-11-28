@@ -6,44 +6,101 @@
     <title>Add Book</title>
     <!-- Bootstrap CSS CDN -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/path/to/your/styles.css"> <!-- Link to your custom CSS file if needed -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #f8f9fa, #bfe9ff);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        .card-header {
+            background: #5baafe;
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            text-align: center;
+            padding: 1.5rem 1rem;
+        }
+        .card-header h1 {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .form-control {
+            border-radius: 10px;
+            padding: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #5baafe;
+            box-shadow: 0 0 5px rgba(91, 170, 254, 0.5);
+        }
+        .btn-primary {
+            background: #5baafe;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: #004085;
+        }
+        .alert {
+            border-radius: 10px;
+        }
+        a {
+            color: #5baafe;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
-        <header>
-            <h1 class="text-center">Add a New Book</h1>
-        </header>
-        
-        <main>
-            <form action="/add-book" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="name">Book Name:</label>
-                    <input type="text" class="form-control" id="name" name="name" required>
+        <div class="row justify-content-center">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h1>Add a New Book</h1>
+                        <p>Please fill in the book details below</p>
+                    </div>
+                    <div class="card-body">
+                        <form action="/add-book" method="POST" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="name">Book Name:</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="author">Author:</label>
+                                <input type="text" class="form-control" id="author" name="author" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="price">Price:</label>
+                                <input type="number" class="form-control" id="price" name="price" required step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="coverImage">Cover Image:</label>
+                                <input type="file" class="form-control-file" id="coverImage" name="coverImage" accept="image/*" required>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-block">Add Book</button>
+                            </div>
+                        </form>
+                        <div class="text-center mt-3">
+                            <a href="/" class="btn btn-secondary">Back to Home</a>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="author">Author:</label>
-                    <input type="text" class="form-control" id="author" name="author" required>
-                </div>
-                <div class="form-group">
-                    <label for="price">Price:</label>
-                    <input type="number" class="form-control" id="price" name="price" required step="0.01">
-                </div>
-                <div class="form-group">
-                    <label for="coverImage">Cover Image:</label>
-                    <input type="file" class="form-control-file" id="coverImage" name="coverImage" accept="image/*" required>
-                </div>
-                <div class="text-center">
-                    <button type="submit" class="btn btn-primary">Add Book</button>
-                </div>
-            </form>
-            <div class="text-center mt-3">
-                <a href="/" class="btn btn-secondary">Back to Home</a>
             </div>
-        </main>
-        
-        <footer class="text-center mt-5">
-            <p>&copy; 2024 BookNest</p>
-        </footer>
+        </div>
     </div>
 
     <!-- Bootstrap JS and dependencies (optional) -->

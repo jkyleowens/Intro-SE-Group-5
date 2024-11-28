@@ -5,7 +5,6 @@
   "main": "app.js",
   "scripts": {
     "test": "jest"
-    
   },
   "author": "",
   "license": "ISC",
@@ -17,7 +16,8 @@
     "express": "^4.21.1",
     "express-session": "^1.18.1",
     "multer": "^1.4.5-lts.1",
-    "sqlite3": "^5.1.7"
+    "sqlite3": "^5.1.7",
+    "supertest-session": "^5.0.1"
   },
   "devDependencies": {
     "jest": "^29.7.0",

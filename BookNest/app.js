@@ -328,8 +328,10 @@ app.get('/login', (req, res) => { // register page: serve index.ejs with registe
     
         const query = "SELECT * FROM users WHERE email = ?";
         db.get(query, [email], async (err, user) => {
-            if (err || !user) {
-                return res.status(404).send('User not found');
+            if (err || !user || !password) {
+                req.flash('error', 'User not found!');
+                return res.redirect('/login');
+
             }
     
             try {
@@ -355,24 +357,36 @@ app.get('/login', (req, res) => { // register page: serve index.ejs with registe
                         };
                     
                         // Return success response instead of redirect
-                         return res.status(200).json({ message: 'Login successful' });
-                    } else {
-                         return res.status(401).send('Invalid credentials');
-                     }
+                    //      return res.status(200).json({ message: 'Login successful' });
+                    // } else {
+                    //      return res.status(401).send('Invalid credentials');
+                    //  }
                     //for testing
     
-                    // if (user.role === 'seller') {
-                    //     // Redirect to the add book page for sellers
-                    //     return res.redirect('/add-book');
-                    // } else {
-                    //     // Redirect to catalog page for buyers
-                    //     return res.redirect('/catalog');
-                    // }
+                    if (user.role === 'seller') {
+                        // Redirect to the add book page for sellers
+                        return res.redirect('/add-book');
+                    } else {
+                        // Redirect to catalog page for buyers
+                        return res.redirect('/catalog');
+                    }
                 } else {
-                    return res.status(401).send('Invalid credentials');
+                    
+                    return res.redirect('/login');
+
+
+                    // return res.status(401).send('Invalid credentials');
                 }
-            } catch (err) {
-                return res.status(500).send('Internal server error');
+            }
+            else{
+                req.flash('error', 'Invalid credentials');
+                return res.redirect('/login');
+ 
+            }
+        } catch (err) {
+                // return res.status(500).send('Internal server error');
+                return res.redirect('/login');
+
             }
         });
     });
@@ -488,7 +502,11 @@ app.post('/register', (req, res) => {
 
         if (existingUser) {
             // Return 409 if the email already exists
-            return res.status(409).send('Email already in use');
+            // return res.status(409).send('Email already in use');
+            req.flash('error', 'Email already in use');
+
+            return res.redirect('/register');
+
         }
 
         // Hash the password
@@ -501,11 +519,14 @@ app.post('/register', (req, res) => {
         db.run(query, params, function(err) {
             if (err) {
                 console.error('Error inserting user:', err.message);
-                return res.status(500).send('Internal Server Error');
+                // return res.status(500).send('Internal Server Error');
+                             return res.redirect('/register');
+
             }
+            return res.redirect('/login');
 
             // Return a success response with status 201
-            return res.status(201).json({ message: 'User registered successfully', email });
+            // return res.status(201).json({ message: 'User registered successfully', email });
         });
     });
 });
@@ -835,6 +856,76 @@ app.post('/process-checkout', (req, res) => {
 
     res.render('order-confirmation', { order });
 });
+app.get('/admin', (req, res) => {
+    // Fetch all users
+    const getUsersQuery = 'SELECT * FROM users';
+    db.all(getUsersQuery, [], (err, users) => {
+        if (err) {
+            console.error('Error fetching users:', err.message);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        // Fetch all books
+        const getBooksQuery = 'SELECT * FROM books';
+        db.all(getBooksQuery, [], (err, books) => {
+            if (err) {
+                console.error('Error fetching books:', err.message);
+                return res.status(500).send('Internal Server Error');
+            }
+
+            // Render the admin page with users and books
+            res.render('./pages/admin', { users, books, flashMessage: req.flash('info') });
+        });
+    });
+});
+
+// Route to delete a user (buyer or seller)
+app.post('/admin/delete-user', (req, res) => {
+    const { userId } = req.body;
+
+    // Ensure the user ID is provided
+    if (!userId) {
+        return res.status(400).send('User ID is required');
+    }
+
+    // Delete the user from the database
+    const query = 'DELETE FROM users WHERE id = ?';
+    db.run(query, [userId], function (err) {
+        if (err) {
+            console.error('Error deleting user:', err.message);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        // Return success response
+        req.flash('info', 'User deleted successfully');
+        return res.redirect('/admin');
+    });
+});
+// Route to delete a book
+app.post('/admin/delete-book', (req, res) => {
+    const { bookId } = req.body;
+
+    // Ensure the book ID is provided
+    if (!bookId) {
+        return res.status(400).send('Book ID is required');
+    }
+
+    // Delete the book from the catalog
+    const query = 'DELETE FROM books WHERE id = ?';
+    db.run(query, [bookId], function (err) {
+        if (err) {
+            console.error('Error deleting book:', err.message);
+            return res.status(500).send('Internal Server Error');
+        }
+
+        // Return success response
+        req.flash('info', 'Book deleted successfully');
+        return res.redirect('/admin');
+    });
+});
+
+
+
 
 if (process.env.NODE_ENV !== 'test') {
     const port = 3000;
