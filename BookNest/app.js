@@ -711,7 +711,7 @@ app.post('/update-quantity', (req, res) => {
 });
 
 app.get('/catalog', (req, res) => { // catalog page: serve index.ejs with register.ejs embedded
-    res.render('index', {
+    res.render('catalog', {
         title: 'Book Catalog',
         content: 'pages/catalog'
     })
