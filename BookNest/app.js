@@ -129,51 +129,101 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 //routing
-app.get('/', (req, res) => {
+app.get('/', (req, res, next) => {
     const flashMessage = req.session.flashMessage; 
     delete req.session.flashMessage; 
 
-    db.all("SELECT * FROM books", [], (err, books) => {
+    const cart = req.session.cart || [];
+    db.all(sql, [], (err, books) => {
         if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Internal Server Error');
+            console.error('Error fetching books:', err.message);
+            return next(err);
         }
-
-        console.log('Books:', books); // Log the books array
 
         res.render('index', {
             title: 'Home',
             content: 'pages/home', // Path to the content EJS file
             books: books || [], // Ensure books is an array
-            flashMessage: flashMessage,
-            user: req.session.user || null // Pass the flash message to the template
+             flashMessage: flashMessage,
+            user: req.session.user || null, // Pass the flash message to the template
+            cart: cart, // Pass the cart to the template
+//         
+            // flashMessage: books.length === 0 ? 'No books available at this moment.' : flashMessage,
         });
     });
 });
 
-app.get('/catalog', (req, res) => {
+// app.get('/catalog', (req, res) => {
+//     const flashMessage = req.session.flashMessage; 
+//     delete req.session.flashMessage; 
+
+//     const cart = req.session.cart || [];
+
+//     //
+//     const sql = `SELECT * FROM books WHERE approved = 1`;
+// db.all(sql, [], (err, books) => {
+//     if (err) {
+//         console.error('Error fetching books:', err.message);
+//         return res.status(500).send('Error fetching books');
+//     }
+
+//     // Render the catalog page with books or an empty array
+//     res.render('catalog', { books, message: books.length === 0 ? 'No books available at this moment.' : null });
+
+
+
+//     //
+
+
+//     // db.all("SELECT * FROM books", [], (err, books) => {
+//     //     if (err) {
+//     //         console.error('Database error:', err);
+//     //         return res.status(500).send('Internal Server Error');
+//     //     }
+
+//         // Render the catalog page, passing the books and cart
+//         res.render('index', {
+//             title: 'Home',
+//             content: 'pages/catalog', // Path to the content EJS file
+//             books: books || [], // Ensure books is an array
+//             flashMessage: flashMessage,
+//             user: req.session.user || null, // Pass the flash message to the template
+//             cart: cart // Pass the cart to the template
+//         });
+//     });
+// });
+
+const sql = `SELECT * FROM books WHERE approved = 1`;
+app.get('/catalog', (req, res, next) => {
     const flashMessage = req.session.flashMessage; 
     delete req.session.flashMessage; 
 
     const cart = req.session.cart || [];
-
-    db.all("SELECT * FROM books", [], (err, books) => {
+    db.all(sql, [], (err, books) => {
         if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Internal Server Error');
+            console.error('Error fetching books:', err.message);
+            return next(err);
         }
 
-        // Render the catalog page, passing the books and cart
         res.render('index', {
             title: 'Home',
             content: 'pages/catalog', // Path to the content EJS file
             books: books || [], // Ensure books is an array
             flashMessage: flashMessage,
             user: req.session.user || null, // Pass the flash message to the template
-            cart: cart // Pass the cart to the template
+            cart: cart, // Pass the cart to the template
+//         
+            message: books.length === 0 ? 'No books available at this moment.' : null,
         });
     });
 });
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err.message);
+    res.status(500).send('Something went wrong! Please try again later.');
+});
+
 app.get('/search', (req, res) => {
     const searchQuery = req.query.query;
     
@@ -571,44 +621,74 @@ app.get('/add-book', (req, res) => { // login page: serve index.ejs with login.e
         content: 'pages/add-book'
     })
 });
-// app.post('/add-book', upload.single('coverImage'), (req, res) => {
-//     const { name, author, price } = req.body;
-//     const coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
-
-//     const sql = `INSERT INTO books (name, author, price, cover_image) VALUES (?, ?, ?, ?)`;
-
-//     db.run(sql, [name, author, price, coverImagePath], (err) => {
-//         if (err) {
-//             console.error('Error inserting book:', err.message);
-//             return res.status(500).send(`Error inserting book: ${err.message}`);
-//         }
-
-//         // Set a flash message
-//         req.flash('info', 'Book added successfully!');
-//         res.redirect('/');
-//     });
-// });
 app.post('/add-book', upload.single('coverImage'), (req, res) => {
     const { name, author, price } = req.body;
     const coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
 
-    if (!coverImagePath) {
-        return res.status(500).send('Cover image is required');
-    }
+    const sql = `INSERT INTO books (name, author, price, cover_image, approved) VALUES (?, ?, ?, ?, ?)`;
 
-    const sql = `INSERT INTO books (name, author, price, cover_image) VALUES (?, ?, ?, ?)`;
-
-    db.run(sql, [name, author, price, coverImagePath], (err) => {
+    db.run(sql, [name, author, price, coverImagePath, 0], (err) => {
         if (err) {
             console.error('Error inserting book:', err.message);
             return res.status(500).send(`Error inserting book: ${err.message}`);
         }
 
         // Set a flash message
-        req.flash('info', 'Book added successfully!');
-        // res.redirect('/');
+        req.session.flashMessage='Book is submitted for admin approval';
+        res.redirect('/');
     });
 });
+// app.post('/add-book', upload.single('coverImage'), (req, res) => {
+//     const { name, author, price } = req.body;
+//     const coverImagePath = req.file ? `/uploads/${req.file.filename}` : null;
+
+//     if (!coverImagePath) {
+//         return res.status(500).send('Cover image is required');
+//     }
+//     const sql = `INSERT INTO books (name, author, price, cover_image, approved) VALUES (?, ?, ?, ?, ?)`;
+//     db.run(sql, [name, author, price, coverImagePath, 0], (err) => {
+//         if (err) {
+//             console.error('Error inserting book:', err.message);
+//             return res.status(500).send(`Error inserting book: ${err.message}`);
+//         }
+//         req.flash('info', 'Book submitted for approval!');
+//         return res.redirect('/');
+//     });
+
+    app.post('/admin/approve-book', (req, res) => {
+        console.log('Request Body:', req.body); // Add this log
+    const { bookId } = req.body;
+
+    if (!bookId) {
+        req.flash('error', 'Book ID is missing.');
+        return res.redirect('/admin');
+    }
+        const sql = `UPDATE books SET approved = 1 WHERE id = ?`;
+        db.run(sql, [bookId], (err) => {
+            if (err) {
+                console.error('Error approving book:', err.message);
+                req.flash('error', 'Error approving book');
+                return res.redirect('/admin');
+            }
+            req.flash('info', 'Book approved successfully!');
+            return res.redirect('/catalog');
+        });
+    });
+    
+    
+    // const sql = `INSERT INTO books (name, author, price, cover_image) VALUES (?, ?, ?, ?)`;
+
+    // db.run(sql, [name, author, price, coverImagePath], (err) => {
+    //     if (err) {
+    //         console.error('Error inserting book:', err.message);
+    //         return res.status(500).send(`Error inserting book: ${err.message}`);
+    //     }
+
+    //     // Set a flash message
+    //     req.flash('info', 'Book added successfully!');
+    //     // res.redirect('/');
+    // });
+//});
 
 // Assuming you have a way to store cart items in session or another structure
 app.get('/cart', (req, res) => {
@@ -710,12 +790,12 @@ app.post('/update-quantity', (req, res) => {
     res.redirect('/cart'); // Redirect back to the cart page
 });
 
-app.get('/catalog', (req, res) => { // catalog page: serve index.ejs with register.ejs embedded
-    res.render('catalog', {
-        title: 'Book Catalog',
-        content: 'pages/catalog'
-    })
-});
+// app.get('/catalog', (req, res) => { // catalog page: serve index.ejs with register.ejs embedded
+//     res.render('catalog', {
+//         title: 'Book Catalog',
+//         content: 'pages/catalog'
+//     })
+// });
 
 app.get('/profile/:id', (req, res) => { // profile page: serve profile template with dynamic content depending on user ID(id)
     //find user in DB with matching ID
@@ -786,7 +866,7 @@ app.get('/checkout', (req, res) => {
     // Render the checkout page
     res.render('pages/checkout', {
         cart: cart,
-        totalPrice: totalPrice, // Pass total price to the checkout page
+        totalPrice, // Pass total price to the checkout page
     });
 });
 
@@ -835,6 +915,7 @@ app.post('/process-checkout', (req, res) => {
     if (!req.session.cart || req.session.cart.length === 0) {
         return res.redirect('/cart'); // Redirect to cart if cart is empty
     }
+    const totalPrice = req.session.totalPrice || 0; // Get total price from session, default to 0 if not set
 
     const { name, address, city, zip, cardNumber, expiration, cvv } = req.body;
 
@@ -846,8 +927,9 @@ app.post('/process-checkout', (req, res) => {
         cardNumber,
         expiration,
         cvv,
-        items: req.session.cart,  // Retrieve cart from session
-        totalPrice: req.session.cart.reduce((total, book) => total + book.price, 0),
+        items: req.session.cart, 
+        totalPrice, // Retrieve cart from session
+       // totalPrice: req.session.cart.reduce((total, book) => total + book.price, 0),
         orderDate: new Date().toLocaleString(),
     };
 

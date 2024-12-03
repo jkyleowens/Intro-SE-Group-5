@@ -118,7 +118,10 @@
         <p>Your one-stop shop for the best books around the globe.</p>
         <a href="#books" class="btn btn-custom btn-lg mt-3">Browse Books</a>
     </div>
-
+    <div class="container mt-5">
+        
+    </div>
+    
     <!-- Main Content -->
     <div class="container mt-5" id="books">
         <% if (flashMessage) { %>
@@ -126,6 +129,7 @@
                 <%= flashMessage %>
             </div>
         <% } %>
+        <% if (books.length > 0) { %>
         <div class="row" style="margin-bottom: 40px;">
             <form style="float:right;" action="/search" method="GET" class="form-inline ml-auto">
                 <input class="form-control mr-2" type="text" name="query" placeholder="Search books..." aria-label="Search">
@@ -148,7 +152,7 @@
                         </div>
                     </div>
                 </div>
-            <% }) %>
+            <% }) %><% } %>
         </div>
     </div>
 

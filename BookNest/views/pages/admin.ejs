@@ -56,7 +56,7 @@
                                 Hello, Admin
                             </span>
                         </li>
-                        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/catalog">Home</a></li>
                         <li class="nav-item"><a class="nav-link" href="/admin">Admin Dashboard</a></li>
                         
                         
@@ -120,6 +120,7 @@
                                     <th>Author</th>
                                     <th>Price</th>
                                     <th>Action</th>
+                                    <th>Approve</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -133,8 +134,14 @@
                                             <form action="/admin/delete-book" method="POST" class="d-inline">
                                                 <input type="hidden" name="bookId" value="<%= book.id %>">
                                                 <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                            </form>
+                                            </form></td>
+                                        <td>
+                                        <form action="/admin/approve-book" method="POST">
+                                            <input type="hidden" name="bookId" value="<%= book.id %>">
+                                            <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                        </form>
                                         </td>
+                                        
                                     </tr>
                                 <% }); %>
                             </tbody>
